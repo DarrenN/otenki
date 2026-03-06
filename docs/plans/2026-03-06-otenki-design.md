@@ -171,7 +171,6 @@ The Makefile includes:
 The entry point (`otenki.main:main`) handles CLI arg parsing and dispatches
 to either TUI mode or JSON mode.
 
-
 ## Testing (FiveAM)
 
 ### Test Suites
