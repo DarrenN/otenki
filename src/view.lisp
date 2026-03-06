@@ -60,33 +60,37 @@ CARD is a weather-card struct. UNITS is :metric or :imperial.
 Returns a multi-line string suitable for terminal display.
 
 Error cards display only the error message inside a border.
-Normal cards show temperature, feels-like, humidity, wind, condition,
-and an hourly forecast row."
+Normal cards show a hero line (icon + temp + feels-like), aligned detail
+rows (humidity, wind, condition), and an hourly forecast row."
   (if (weather-card-error-message card)
       ;; Error card: show only the error message
       (tui:render-border
        (format nil "Error~%~%~A" (weather-card-error-message card))
        tui:*border-rounded*
-       :title (weather-card-location-name card))
+       :title (weather-card-location-name card)
+       :fg-color tui:*fg-bright-black*)
       ;; Normal card
       (let* ((icon (condition-icon (weather-card-condition-id card)))
-             (temp-line (format nil "~A ~A  feels ~A"
-                                icon
-                                (format-temp (weather-card-current-temp card) units)
-                                (format-temp (weather-card-feels-like card) units)))
-             (detail-line (format nil "Humidity: ~D%  Wind: ~A"
-                                  (weather-card-humidity card)
-                                  (format-wind-speed (weather-card-wind-speed card) units)))
-             (condition-line (weather-card-condition-text card))
+             (temp-fg (temp-color (weather-card-current-temp card)))
+             (temp-str (tui:colored (format-temp (weather-card-current-temp card) units)
+                                    :fg temp-fg))
+             (feels-str (tui:colored (format-temp (weather-card-feels-like card) units)
+                                     :fg temp-fg))
+             (hero-line (format nil "~A ~A  feels ~A"
+                                icon temp-str feels-str))
+             (humidity-line (format nil "~14A~D%" "Humidity" (weather-card-humidity card)))
+             (wind-line (format nil "~14A~A" "Wind"
+                                (format-wind-speed (weather-card-wind-speed card) units)))
+             (condition-line (format nil "~14A~A" "Condition"
+                                     (weather-card-condition-text card)))
              (hourly (render-hourly-row
                       (weather-card-hourly-forecast card) units))
-             (body (if hourly
-                       (format nil "~A~%~A~%~A~%~%~A"
-                               temp-line detail-line condition-line hourly)
-                       (format nil "~A~%~A~%~A"
-                               temp-line detail-line condition-line))))
+             (body (format nil "~A~%~%~A~%~A~%~A~@[~%~%~A~]"
+                           hero-line humidity-line wind-line
+                           condition-line hourly)))
         (tui:render-border body tui:*border-rounded*
-                           :title (weather-card-location-name card)))))
+                           :title (tui:bold (weather-card-location-name card))
+                           :fg-color tui:*fg-bright-black*))))
 
 ;;;; --- Grid Layout ---
 

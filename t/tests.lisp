@@ -281,6 +281,13 @@ Normalizes keys to uppercase keywords to match openweathermap library output."
                  :metric 80)))
     (is (search "Tokyo" output))))
 
+(test render-weather-card-aligned-labels
+  "Card contains aligned label columns"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "Humidity" output))
+    (is (search "Wind" output))
+    (is (search "Condition" output))))
+
 (test condition-icon-returns-string
   "condition-icon returns a string"
   (is (stringp (otenki.view:condition-icon 800))))
