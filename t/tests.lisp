@@ -211,3 +211,56 @@
   "Parse empty geocoding response"
   (let ((result (otenki.api:parse-geocoding-response nil)))
     (is (null result))))
+
+;;;; --- View Tests ---
+
+(def-suite view-tests :description "View rendering tests" :in all-tests)
+(in-suite view-tests)
+
+(defun make-test-card ()
+  "Create a weather card for testing."
+  (otenki.model:make-weather-card
+   :location-name "Tokyo"
+   :latitude 35.6762
+   :longitude 139.6503
+   :current-temp 295.15
+   :feels-like 293.15
+   :humidity 65
+   :wind-speed 3.2
+   :wind-direction 180
+   :condition-id 800
+   :condition-text "clear sky"
+   :hourly-forecast (list
+                     (otenki.model:make-hourly-entry :hour 12 :temp 295.15 :condition-id 800 :pop 0.0)
+                     (otenki.model:make-hourly-entry :hour 13 :temp 296.0 :condition-id 801 :pop 0.1)
+                     (otenki.model:make-hourly-entry :hour 14 :temp 294.5 :condition-id 802 :pop 0.2))))
+
+(test render-weather-card-contains-location
+  "Rendered card contains location name"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "Tokyo" output))))
+
+(test render-weather-card-contains-temp
+  "Rendered card contains temperature"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "22" output))))
+
+(test render-weather-card-contains-humidity
+  "Rendered card contains humidity"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "65%" output))))
+
+(test render-weather-card-error
+  "Rendered error card shows error message"
+  (let* ((card (otenki.model:make-weather-card
+                :location-name "Nowhere"
+                :error-message "Location not found"))
+         (output (otenki.view:render-weather-card card :metric)))
+    (is (search "Location not found" output))))
+
+(test render-card-grid-multiple
+  "Grid renders multiple cards"
+  (let ((output (otenki.view:render-card-grid
+                 (list (make-test-card) (make-test-card))
+                 :metric 80)))
+    (is (search "Tokyo" output))))

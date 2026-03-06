@@ -63,6 +63,7 @@
                 #:weather-card-humidity
                 #:weather-card-wind-speed
                 #:weather-card-wind-direction
+                #:weather-card-condition-id
                 #:weather-card-condition-text
                 #:weather-card-hourly-forecast
                 #:weather-card-error-message
