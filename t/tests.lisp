@@ -82,3 +82,67 @@
                 :pop 0.2)))
     (is (= (otenki.model:hourly-entry-hour entry) 14))
     (is (= (otenki.model:hourly-entry-pop entry) 0.2))))
+
+;;;; --- Config Tests ---
+
+(def-suite config-tests :description "Config tests" :in all-tests)
+(in-suite config-tests)
+
+(test default-config
+  "Default config values"
+  (let ((cfg (otenki.config:make-app-config)))
+    (is (eql (otenki.config:app-config-units cfg) :metric))
+    (is (= (otenki.config:app-config-refresh-interval cfg) 600))
+    (is (null (otenki.config:app-config-locations cfg)))
+    (is (not (otenki.config:app-config-json-mode-p cfg)))))
+
+(test parse-config-plist
+  "Parse a config plist"
+  (let ((cfg (otenki.config:parse-config-plist
+              '(:units :imperial :refresh-interval 300
+                :locations ("Tokyo" "London")))))
+    (is (eql (otenki.config:app-config-units cfg) :imperial))
+    (is (= (otenki.config:app-config-refresh-interval cfg) 300))
+    (is (equal (otenki.config:app-config-locations cfg)
+               '("Tokyo" "London")))))
+
+(test parse-cli-args-locations
+  "CLI args with location names"
+  (let ((cfg (otenki.config:parse-cli-args '("Tokyo" "London"))))
+    (is (equal (otenki.config:app-config-locations cfg) '("Tokyo" "London")))
+    (is (not (otenki.config:app-config-json-mode-p cfg)))))
+
+(test parse-cli-args-json-flag
+  "CLI args with --json flag"
+  (let ((cfg (otenki.config:parse-cli-args '("--json" "Tokyo"))))
+    (is (otenki.config:app-config-json-mode-p cfg))
+    (is (equal (otenki.config:app-config-locations cfg) '("Tokyo")))))
+
+(test parse-cli-args-units-flag
+  "CLI args with --units flag"
+  (let ((cfg (otenki.config:parse-cli-args '("--units" "imperial"))))
+    (is (eql (otenki.config:app-config-units cfg) :imperial))))
+
+(test resolve-config-cli-overrides-file
+  "CLI args override config file values"
+  (let ((file-cfg (otenki.config:make-app-config
+                   :units :metric
+                   :locations '("Paris")))
+        (cli-cfg (otenki.config:make-app-config
+                  :units :imperial
+                  :locations '("Tokyo"))))
+    (let ((merged (otenki.config:merge-configs file-cfg cli-cfg)))
+      (is (eql (otenki.config:app-config-units merged) :imperial))
+      (is (equal (otenki.config:app-config-locations merged) '("Tokyo"))))))
+
+(test resolve-config-cli-nil-keeps-file
+  "CLI nil values fall back to config file"
+  (let ((file-cfg (otenki.config:make-app-config
+                   :units :imperial
+                   :refresh-interval 300
+                   :locations '("Paris")))
+        (cli-cfg (otenki.config:make-app-config)))
+    (let ((merged (otenki.config:merge-configs file-cfg cli-cfg)))
+      (is (eql (otenki.config:app-config-units merged) :imperial))
+      (is (= (otenki.config:app-config-refresh-interval merged) 300))
+      (is (equal (otenki.config:app-config-locations merged) '("Paris"))))))
