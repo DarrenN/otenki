@@ -264,3 +264,25 @@
                  (list (make-test-card) (make-test-card))
                  :metric 80)))
     (is (search "Tokyo" output))))
+
+;;;; --- JSON Tests ---
+
+(def-suite json-tests :description "JSON output tests" :in all-tests)
+(in-suite json-tests)
+
+(test weather-card-to-plist
+  "Convert weather-card to a serializable plist"
+  (let* ((card (make-test-card))
+         (plist (otenki.json:weather-card-to-plist card)))
+    (is (string= (getf plist :|location|) "Tokyo"))
+    (is (< (abs (- (getf plist :|latitude|) 35.6762)) 0.001))
+    (is (= (getf plist :|humidity|) 65))
+    (is (listp (getf plist :|hourly_forecast|)))))
+
+(test cards-to-json-valid
+  "cards-to-json produces valid JSON string"
+  (let* ((card (make-test-card))
+         (json-str (otenki.json:cards-to-json (list card))))
+    (is (stringp json-str))
+    ;; Should start with [ since it's an array
+    (is (char= (char (string-left-trim '(#\Space #\Newline) json-str) 0) #\[))))
