@@ -115,35 +115,49 @@ then joined horizontally per row and vertically across rows."
 
 ;;;; --- Status Bar ---
 
-(defun render-status-bar (last-updated refresh-interval loading-p)
-  "Render the bottom status bar as a plain string.
+(defun render-status-bar (last-updated next-refresh-time loading-p
+                          location-count units)
+  "Render the bottom status bar.
 LAST-UPDATED is a universal-time integer or NIL.
-REFRESH-INTERVAL is the configured refresh interval in seconds (unused in display).
-LOADING-P is T when a background refresh is in progress."
-  (declare (ignore refresh-interval))
-  (let* ((status (if loading-p
-                     "Refreshing..."
-                     (if last-updated
-                         (multiple-value-bind (s m h)
-                             (decode-universal-time last-updated)
-                           (declare (ignore s))
-                           (format nil "Updated: ~2,'0D:~2,'0D" h m))
-                         "Not yet updated")))
-         (keys "[r] Refresh  [q] Quit"))
-    (format nil "~A    ~A" keys status)))
+NEXT-REFRESH-TIME is the universal-time of the next auto-refresh, or NIL.
+LOADING-P is T when a background refresh is in progress.
+LOCATION-COUNT is the number of configured locations.
+UNITS is :metric or :imperial."
+  (let* ((keys (tui:colored "[r] Refresh  [q] Quit" :fg tui:*fg-bright-black*))
+         (info (format nil "~D location~:P · ~(~A~)" location-count units))
+         (updated (cond
+                    (loading-p "Refreshing...")
+                    (last-updated
+                     (multiple-value-bind (s m h)
+                         (decode-universal-time last-updated)
+                       (declare (ignore s))
+                       (format nil "Updated ~2,'0D:~2,'0D" h m)))
+                    (t "Not yet updated")))
+         (countdown (when (and next-refresh-time (not loading-p))
+                      (let ((remaining (- next-refresh-time (get-universal-time))))
+                        (when (plusp remaining)
+                          (format nil "Next in ~D:~2,'0D"
+                                  (floor remaining 60)
+                                  (mod remaining 60))))))
+         (time-section (if countdown
+                           (format nil "~A · ~A" updated countdown)
+                           updated)))
+    (format nil "~A  │  ~A  │  ~A" keys info time-section)))
 
 ;;;; --- Full Application Render ---
 
 (defun render-app (cards units terminal-width last-updated
-                   refresh-interval loading-p error-message)
+                   next-refresh-time loading-p error-message
+                   location-count)
   "Render the complete application view as a single string.
 CARDS is a list of weather-card structs (may be NIL).
 UNITS is :metric or :imperial.
 TERMINAL-WIDTH is the number of terminal columns.
 LAST-UPDATED is a universal-time integer or NIL.
-REFRESH-INTERVAL is seconds between refreshes.
+NEXT-REFRESH-TIME is the universal-time of the next auto-refresh, or NIL.
 LOADING-P is T when a background fetch is running.
-ERROR-MESSAGE, if non-NIL, is appended in red below the status bar."
+ERROR-MESSAGE, if non-NIL, is appended in red below the status bar.
+LOCATION-COUNT is the number of configured locations."
   (let* ((title (tui:bold "otenki"))
          (grid (cond
                  (cards
@@ -152,7 +166,8 @@ ERROR-MESSAGE, if non-NIL, is appended in red below the status bar."
                   "Loading weather data...")
                  (t
                   "No locations configured. Add locations to ~/.config/otenki/config.lisp")))
-         (status (render-status-bar last-updated refresh-interval loading-p))
+         (status (render-status-bar last-updated next-refresh-time
+                                    loading-p location-count units))
          (parts (list title "" grid "" status)))
     (when error-message
       (setf parts (append parts (list (tui:colored error-message :fg tui:*fg-red*)))))

@@ -51,6 +51,11 @@
     :initform 600
     :type     integer
     :documentation "Auto-refresh interval in seconds.")
+   (next-refresh-time
+    :accessor otenki-model-next-refresh-time
+    :initarg  :next-refresh-time
+    :initform nil
+    :documentation "Universal time of the next scheduled refresh, or NIL.")
    (error-message
     :accessor otenki-model-error-message
     :initarg  :error-message
@@ -103,6 +108,8 @@ concurrently."
 (defmethod tui:init ((model otenki-model))
   "Initialize the program: kick off fetches for all configured locations and
 schedule the first auto-refresh tick."
+  (setf (otenki-model-next-refresh-time model)
+        (+ (get-universal-time) (otenki-model-refresh-interval model)))
   (when (otenki-model-locations model)
     (tui:batch
      (make-fetch-all-cmd (otenki-model-locations model))
@@ -146,7 +153,9 @@ schedule the first auto-refresh tick."
 ;;; Handle the auto-refresh timer.
 (defmethod tui:update-message ((model otenki-model) (msg refresh-msg))
   "Trigger a full re-fetch and schedule the next timer tick."
-  (setf (otenki-model-loading-p model) t)
+  (setf (otenki-model-loading-p model) t
+        (otenki-model-next-refresh-time model)
+        (+ (get-universal-time) (otenki-model-refresh-interval model)))
   (values model
           (tui:batch
            (make-fetch-all-cmd (otenki-model-locations model))
@@ -179,9 +188,10 @@ schedule the first auto-refresh tick."
               (otenki-model-units            model)
               (otenki-model-terminal-width   model)
               (otenki-model-last-updated     model)
-              (otenki-model-refresh-interval model)
+              (otenki-model-next-refresh-time model)
               (otenki-model-loading-p        model)
-              (otenki-model-error-message    model)))
+              (otenki-model-error-message    model)
+              (length (otenki-model-locations model))))
 
 ;;;; --- Entry Point ---
 

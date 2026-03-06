@@ -288,6 +288,25 @@ Normalizes keys to uppercase keywords to match openweathermap library output."
     (is (search "Wind" output))
     (is (search "Condition" output))))
 
+(test render-status-bar-contains-keys
+  "Status bar contains keyboard shortcuts"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "[r]" output))
+    (is (search "[q]" output))))
+
+(test render-status-bar-contains-units
+  "Status bar shows current units"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "metric" output))))
+
+(test render-status-bar-contains-location-count
+  "Status bar shows location count"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "3" output))))
+
 (test condition-icon-returns-string
   "condition-icon returns a string"
   (is (stringp (otenki.view:condition-icon 800))))
