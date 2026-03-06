@@ -23,6 +23,20 @@ Condition ranges follow OWM documentation:
     ((= condition-id 800) (tui:colored "☀" :fg tui:*fg-yellow*))
     (t                    (tui:colored "☁" :fg tui:*fg-bright-black*))))
 
+;;;; --- Temperature Colors ---
+
+(defun temp-color (kelvin)
+  "Return a foreground color parameter based on temperature in Kelvin.
+Converts to Celsius internally for threshold comparison.
+  <=5C -> blue, 5-15C -> cyan, 15-25C -> green, 25-35C -> yellow, >35C -> red."
+  (let ((celsius (kelvin-to-celsius kelvin)))
+    (cond
+      ((<= celsius 5.0)  tui:*fg-blue*)
+      ((<= celsius 15.0) tui:*fg-cyan*)
+      ((<= celsius 25.0) tui:*fg-green*)
+      ((<= celsius 35.0) tui:*fg-yellow*)
+      (t                  tui:*fg-red*))))
+
 ;;;; --- Hourly Forecast Row ---
 
 (defun render-hourly-row (entries units)

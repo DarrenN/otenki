@@ -71,8 +71,10 @@
                 #:hourly-entry-temp
                 #:hourly-entry-pop
                 #:format-temp
-                #:format-wind-speed)
+                #:format-wind-speed
+                #:kelvin-to-celsius)
   (:export #:condition-icon
+           #:temp-color
            #:render-weather-card
            #:render-card-grid
            #:render-status-bar

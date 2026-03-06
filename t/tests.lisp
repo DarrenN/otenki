@@ -8,7 +8,8 @@
                 #:test
                 #:is
                 #:run!)
-  (:local-nicknames (#:jojo #:jonathan))
+  (:local-nicknames (#:jojo #:jonathan)
+                    (#:tui #:tuition))
   (:export #:run-all-tests))
 
 (in-package #:otenki.tests)
@@ -295,6 +296,26 @@ Normalizes keys to uppercase keywords to match openweathermap library output."
 (test condition-icon-snow-contains-snowflake
   "Snow icon contains the snowflake character"
   (is (search "❄" (otenki.view:condition-icon 600))))
+
+(test temp-color-freezing
+  "Freezing temperatures return blue"
+  (is (eql (otenki.view:temp-color 273.15) tui:*fg-blue*)))
+
+(test temp-color-cool
+  "Cool temperatures (10°C) return cyan"
+  (is (eql (otenki.view:temp-color 283.15) tui:*fg-cyan*)))
+
+(test temp-color-mild
+  "Mild temperatures (20°C) return green"
+  (is (eql (otenki.view:temp-color 293.15) tui:*fg-green*)))
+
+(test temp-color-warm
+  "Warm temperatures (30°C) return yellow"
+  (is (eql (otenki.view:temp-color 303.15) tui:*fg-yellow*)))
+
+(test temp-color-hot
+  "Hot temperatures (40°C) return red"
+  (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
 ;;;; --- JSON Tests ---
 
