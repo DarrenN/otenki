@@ -107,36 +107,53 @@
                '("Tokyo" "London")))))
 
 (test parse-cli-args-locations
-  "CLI args with location names"
-  (let ((cfg (otenki.config:parse-cli-args '("Tokyo" "London"))))
+  "CLI args with location names yield config and :locations in explicit-fields"
+  (multiple-value-bind (cfg explicit-fields)
+      (otenki.config:parse-cli-args '("Tokyo" "London"))
     (is (equal (otenki.config:app-config-locations cfg) '("Tokyo" "London")))
-    (is (not (otenki.config:app-config-json-mode-p cfg)))))
+    (is (not (otenki.config:app-config-json-mode-p cfg)))
+    (is (member :locations explicit-fields))))
 
 (test parse-cli-args-json-flag
-  "CLI args with --json flag"
-  (let ((cfg (otenki.config:parse-cli-args '("--json" "Tokyo"))))
+  "CLI args with --json flag sets json-mode-p and records :json-mode-p"
+  (multiple-value-bind (cfg explicit-fields)
+      (otenki.config:parse-cli-args '("--json" "Tokyo"))
     (is (otenki.config:app-config-json-mode-p cfg))
-    (is (equal (otenki.config:app-config-locations cfg) '("Tokyo")))))
+    (is (equal (otenki.config:app-config-locations cfg) '("Tokyo")))
+    (is (member :json-mode-p explicit-fields))))
 
 (test parse-cli-args-units-flag
-  "CLI args with --units flag"
-  (let ((cfg (otenki.config:parse-cli-args '("--units" "imperial"))))
-    (is (eql (otenki.config:app-config-units cfg) :imperial))))
+  "CLI args with --units flag records value and :units in explicit-fields"
+  (multiple-value-bind (cfg explicit-fields)
+      (otenki.config:parse-cli-args '("--units" "imperial"))
+    (is (eql (otenki.config:app-config-units cfg) :imperial))
+    (is (member :units explicit-fields))))
 
-(test resolve-config-cli-overrides-file
-  "CLI args override config file values"
+(test parse-cli-args-units-missing-arg
+  "Missing argument after --units signals an error"
+  (fiveam:signals error
+    (otenki.config:parse-cli-args '("--units"))))
+
+(test parse-cli-args-units-invalid-value
+  "Invalid --units value signals an error"
+  (fiveam:signals error
+    (otenki.config:parse-cli-args '("--units" "kelvin"))))
+
+(test merge-configs-explicit-overrides-file
+  "merge-configs: explicit CLI fields override file config"
   (let ((file-cfg (otenki.config:make-app-config
                    :units :metric
                    :locations '("Paris")))
         (cli-cfg (otenki.config:make-app-config
                   :units :imperial
                   :locations '("Tokyo"))))
-    (let ((merged (otenki.config:merge-configs file-cfg cli-cfg)))
+    (let ((merged (otenki.config:merge-configs
+                   file-cfg cli-cfg '(:units :locations))))
       (is (eql (otenki.config:app-config-units merged) :imperial))
       (is (equal (otenki.config:app-config-locations merged) '("Tokyo"))))))
 
-(test resolve-config-cli-nil-keeps-file
-  "CLI nil values fall back to config file"
+(test merge-configs-no-explicit-keeps-file
+  "merge-configs: without explicit-fields, file config values are kept"
   (let ((file-cfg (otenki.config:make-app-config
                    :units :imperial
                    :refresh-interval 300
@@ -146,3 +163,10 @@
       (is (eql (otenki.config:app-config-units merged) :imperial))
       (is (= (otenki.config:app-config-refresh-interval merged) 300))
       (is (equal (otenki.config:app-config-locations merged) '("Paris"))))))
+
+(test merge-configs-json-mode-is-ored
+  "merge-configs: json-mode-p is OR'd from both sources"
+  (let ((file-cfg (otenki.config:make-app-config :json-mode-p t))
+        (cli-cfg (otenki.config:make-app-config)))
+    (let ((merged (otenki.config:merge-configs file-cfg cli-cfg)))
+      (is (otenki.config:app-config-json-mode-p merged)))))
