@@ -2,15 +2,19 @@
 (in-package #:otenki.api)
 
 ;;;; --- Response Parsing (Pure Functions) ---
+;;;;
+;;;; The openweathermap client library normalizes JSON keys to uppercase
+;;;; keywords (e.g. :TEMP, :LAT) via string-upcase + intern.  All getf
+;;;; lookups below use uppercase keywords to match.
 
 (defun parse-geocoding-response (data)
   "Parse geocoding response (list of plists) into first result.
 Returns a plist (:name :lat :lon) or NIL if no results."
   (when (and data (listp data) (first data))
     (let ((entry (first data)))
-      (list :name (getf entry :|name|)
-            :lat (getf entry :|lat|)
-            :lon (getf entry :|lon|)))))
+      (list :name (getf entry :NAME)
+            :lat (float (getf entry :LAT) 0.0)
+            :lon (float (getf entry :LON) 0.0)))))
 
 (defun unix-to-hour (unix-timestamp timezone-offset)
   "Extract hour (0-23) from a UNIX timestamp with timezone offset."
@@ -19,34 +23,34 @@ Returns a plist (:name :lat :lon) or NIL if no results."
 
 (defun parse-hourly-entry (entry timezone-offset)
   "Parse a single hourly forecast entry plist into an hourly-entry struct."
-  (let ((weather-list (getf entry :|weather|)))
+  (let ((weather-list (getf entry :WEATHER)))
     (make-hourly-entry
-     :hour (unix-to-hour (getf entry :|dt|) timezone-offset)
-     :temp (float (getf entry :|temp|) 0.0)
+     :hour (unix-to-hour (getf entry :DT) timezone-offset)
+     :temp (float (getf entry :TEMP) 0.0)
      :condition-id (if weather-list
-                       (getf (first weather-list) :|id|)
+                       (getf (first weather-list) :ID)
                        0)
-     :pop (float (or (getf entry :|pop|) 0.0) 0.0))))
+     :pop (float (or (getf entry :POP) 0.0) 0.0))))
 
 (defun parse-onecall-response (data location-name)
   "Parse onecall API response plist into a weather-card struct."
-  (let* ((current (getf data :|current|))
-         (weather-list (getf current :|weather|))
+  (let* ((current (getf data :CURRENT))
+         (weather-list (getf current :WEATHER))
          (first-weather (when weather-list (first weather-list)))
-         (timezone-offset (or (getf data :|timezone_offset|) 0))
-         (hourly-data (getf data :|hourly|)))
+         (timezone-offset (or (getf data :TIMEZONE_OFFSET) 0))
+         (hourly-data (getf data :HOURLY)))
     (make-weather-card
      :location-name location-name
-     :latitude (float (getf data :|lat|) 0.0)
-     :longitude (float (getf data :|lon|) 0.0)
-     :current-temp (float (getf current :|temp|) 0.0)
-     :feels-like (float (getf current :|feels_like|) 0.0)
-     :humidity (getf current :|humidity|)
-     :wind-speed (float (getf current :|wind_speed|) 0.0)
-     :wind-direction (or (getf current :|wind_deg|) 0)
-     :condition-id (if first-weather (getf first-weather :|id|) 0)
+     :latitude (float (getf data :LAT) 0.0)
+     :longitude (float (getf data :LON) 0.0)
+     :current-temp (float (getf current :TEMP) 0.0)
+     :feels-like (float (getf current :FEELS_LIKE) 0.0)
+     :humidity (getf current :HUMIDITY)
+     :wind-speed (float (getf current :WIND_SPEED) 0.0)
+     :wind-direction (or (getf current :WIND_DEG) 0)
+     :condition-id (if first-weather (getf first-weather :ID) 0)
      :condition-text (if first-weather
-                         (getf first-weather :|description|)
+                         (getf first-weather :DESCRIPTION)
                          "unknown")
      :hourly-forecast (mapcar (lambda (e)
                                 (parse-hourly-entry e timezone-offset))

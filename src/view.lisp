@@ -126,9 +126,13 @@ REFRESH-INTERVAL is seconds between refreshes.
 LOADING-P is T when a background fetch is running.
 ERROR-MESSAGE, if non-NIL, is appended in red below the status bar."
   (let* ((title (tui:bold "otenki"))
-         (grid (if cards
-                   (render-card-grid cards units terminal-width)
-                   "No locations configured. Add locations to ~/.config/otenki/config.lisp"))
+         (grid (cond
+                 (cards
+                  (render-card-grid cards units terminal-width))
+                 (loading-p
+                  "Loading weather data...")
+                 (t
+                  "No locations configured. Add locations to ~/.config/otenki/config.lisp")))
          (status (render-status-bar last-updated refresh-interval loading-p))
          (parts (list title "" grid "" status)))
     (when error-message

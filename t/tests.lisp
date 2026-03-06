@@ -177,11 +177,26 @@
 (def-suite api-tests :description "API response parsing tests" :in all-tests)
 (in-suite api-tests)
 
+(defun normalize-json-keys (value)
+  "Normalize JSON keys to uppercase keywords to match openweathermap library output."
+  (typecase value
+    (cons
+     ;; Check if it looks like a plist (keyword in car position)
+     (if (keywordp (car value))
+         ;; Plist: upcase keys, recurse values
+         (loop for (k v) on value by #'cddr
+               collect (intern (string-upcase (symbol-name k)) :keyword)
+               collect (normalize-json-keys v))
+         ;; Regular list: recurse each element
+         (mapcar #'normalize-json-keys value)))
+    (t value)))
+
 (defun load-fixture (name)
-  "Load a JSON fixture file and parse it."
+  "Load a JSON fixture file and parse it.
+Normalizes keys to uppercase keywords to match openweathermap library output."
   (let ((path (asdf:system-relative-pathname :otenki/tests
                                               (format nil "t/fixtures/~A" name))))
-    (jojo:parse (uiop:read-file-string path))))
+    (normalize-json-keys (jojo:parse (uiop:read-file-string path)))))
 
 (test parse-geocoding-response
   "Parse geocoding API response into lat/lon"
