@@ -10,7 +10,7 @@
   (format t "  otenki --json              JSON output for config locations~%")
   (format t "  otenki --json Tokyo        JSON output for specific locations~%")
   (format t "  otenki --units imperial    Override display units~%")
-  (format t "  otenki --help              Show this help~%~%")
+  (format t "  otenki -h                  Show this help~%~%")
   (format t "Configuration:~%")
   (format t "  File: ~~/.config/otenki/config.lisp~%")
   (format t "  API key: OPENWEATHER_API_KEY environment variable~%"))
@@ -31,8 +31,10 @@
 Parses command-line arguments, resolves configuration, and dispatches to
 either JSON output mode or the interactive TUI."
   (let ((args (uiop:command-line-arguments)))
-    ;; Handle --help before anything else.
-    (when (member "--help" args :test #'string=)
+    ;; Handle help flags before anything else.
+    ;; Note: --help is intercepted by SBCL runtime, so we use -h.
+    (when (or (member "-h" args :test #'string=)
+              (member "help" args :test #'string=))
       (print-usage)
       (uiop:quit 0))
     ;; Ensure the API key is present before doing any network work.
