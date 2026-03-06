@@ -1,29 +1,48 @@
-.PHONY: deps repl test build install clean
+.PHONY: deps repl test build install clean config help
 
 VENDOR_DIR := $(shell pwd)/vendor
 CL_SOURCE_REGISTRY := $(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//:$(VENDOR_DIR)/cl-tuition//
 SBCL := CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" sbcl --noinform --non-interactive
 
-deps:
+deps: ## Fetch vendored git submodules
 	git submodule update --init --recursive
 
-repl:
+repl: ## Start a REPL with otenki loaded
 	CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" rlwrap sbcl --noinform --load otenki.asd \
 		--eval '(asdf:load-system :otenki)'
 
-test:
+test: ## Run the test suite
 	$(SBCL) --load otenki.asd \
 		--eval '(asdf:load-system :otenki/tests)' \
 		--eval '(unless (otenki.tests:run-all-tests) (uiop:quit 1))'
 
-build:
+build: ## Build standalone executable to bin/otenki
 	mkdir -p bin
 	$(SBCL) --load otenki.asd \
 		--eval '(asdf:load-system :otenki)' \
 		--eval '(sb-ext:save-lisp-and-die "bin/otenki" :toplevel #'"'"'otenki.main:main :executable t :compression t)'
 
-install: build
+install: build ## Build and install to ~/bin/otenki
 	cp bin/otenki ~/bin/otenki
 
-clean:
+CONFIG_DIR  := $(HOME)/.config/otenki
+CONFIG_FILE := $(CONFIG_DIR)/config.lisp
+
+config: ## Create a fresh config file at ~/.config/otenki/config.lisp
+	@mkdir -p $(CONFIG_DIR)
+	@if [ -f $(CONFIG_FILE) ]; then \
+		echo "Config already exists: $(CONFIG_FILE)"; \
+		echo "Remove it first if you want a fresh one."; \
+		exit 1; \
+	fi
+	@printf '(:units :metric\n :refresh-interval 600\n :locations ("Tokyo"))\n' > $(CONFIG_FILE)
+	@echo "Created $(CONFIG_FILE)"
+
+clean: ## Remove build artifacts
 	rm -rf bin/
+
+help: ## Show available targets
+	@printf '\nUsage: make <target>\n\n'
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
+		awk -F ':.*?## ' '{printf "  %-15s %s\n", $$1, $$2}'
+	@echo
