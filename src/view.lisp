@@ -1,0 +1,140 @@
+;;;; view.lisp — pure rendering functions
+;;;;
+;;;; This module contains all UI rendering logic. Functions here are pure:
+;;;; they take weather-card data and return formatted strings. No I/O occurs.
+;;;; The tuition (tui) library is used for borders, layout, and styling.
+
+(in-package #:otenki.view)
+
+;;;; --- Condition Icons ---
+
+(defun condition-icon (condition-id)
+  "Map an OWM condition ID to a simple text icon.
+Condition ranges follow OWM documentation:
+  2xx — Thunderstorm, 3xx — Drizzle, 5xx — Rain,
+  6xx — Snow, 7xx — Atmosphere (fog/mist), 800 — Clear, 8xx — Clouds."
+  (cond
+    ((< condition-id 300) "storm")
+    ((< condition-id 400) "drizzle")
+    ((< condition-id 600) "rain")
+    ((< condition-id 700) "snow")
+    ((< condition-id 800) "fog")
+    ((= condition-id 800) "clear")
+    (t "clouds")))
+
+;;;; --- Hourly Forecast Row ---
+
+(defun render-hourly-row (entries units)
+  "Render a compact hourly forecast as two rows: hours then temps.
+ENTRIES is a list of hourly-entry structs. UNITS is :metric or :imperial.
+Returns a newline-separated string of two rows, or NIL if entries is empty."
+  (when entries
+    (let ((hours (mapcar (lambda (e)
+                           (format nil "~2,'0Dh" (hourly-entry-hour e)))
+                         entries))
+          (temps (mapcar (lambda (e)
+                           (format-temp (hourly-entry-temp e) units))
+                         entries)))
+      (format nil "~{~A ~}~%~{~A ~}" hours temps))))
+
+;;;; --- Single Card Rendering ---
+
+(defun render-weather-card (card units)
+  "Render a single weather card as a bordered string.
+CARD is a weather-card struct. UNITS is :metric or :imperial.
+Returns a multi-line string suitable for terminal display.
+
+Error cards display only the error message inside a border.
+Normal cards show temperature, feels-like, humidity, wind, condition,
+and an hourly forecast row."
+  (if (weather-card-error-message card)
+      ;; Error card: show only the error message
+      (tui:render-border
+       (format nil "Error~%~%~A" (weather-card-error-message card))
+       tui:*border-rounded*
+       :title (weather-card-location-name card))
+      ;; Normal card
+      (let* ((icon (condition-icon (weather-card-condition-id card)))
+             (temp-line (format nil "~A ~A  feels ~A"
+                                icon
+                                (format-temp (weather-card-current-temp card) units)
+                                (format-temp (weather-card-feels-like card) units)))
+             (detail-line (format nil "Humidity: ~D%  Wind: ~A"
+                                  (weather-card-humidity card)
+                                  (format-wind-speed (weather-card-wind-speed card) units)))
+             (condition-line (weather-card-condition-text card))
+             (hourly (render-hourly-row
+                      (weather-card-hourly-forecast card) units))
+             (body (if hourly
+                       (format nil "~A~%~A~%~A~%~%~A"
+                               temp-line detail-line condition-line hourly)
+                       (format nil "~A~%~A~%~A"
+                               temp-line detail-line condition-line))))
+        (tui:render-border body tui:*border-rounded*
+                           :title (weather-card-location-name card)))))
+
+;;;; --- Grid Layout ---
+
+(defun render-card-grid (cards units terminal-width)
+  "Render weather cards in a responsive grid layout.
+CARDS is a list of weather-card structs. UNITS is :metric or :imperial.
+TERMINAL-WIDTH is the number of terminal columns available.
+
+Cards are arranged into rows based on an estimated card width of 36 columns,
+then joined horizontally per row and vertically across rows."
+  (let* ((card-width 36)
+         (cards-per-row (max 1 (floor terminal-width card-width)))
+         (rendered (mapcar (lambda (c) (render-weather-card c units)) cards))
+         (rows (loop for i from 0 below (length rendered) by cards-per-row
+                     collect (subseq rendered i
+                                     (min (+ i cards-per-row)
+                                          (length rendered))))))
+    (apply #'tui:join-vertical tui:+left+
+           (mapcar (lambda (row)
+                     (apply #'tui:join-horizontal tui:+top+ row))
+                   rows))))
+
+;;;; --- Status Bar ---
+
+(defun render-status-bar (last-updated refresh-interval loading-p)
+  "Render the bottom status bar as a plain string.
+LAST-UPDATED is a universal-time integer or NIL.
+REFRESH-INTERVAL is the configured refresh interval in seconds (unused in display).
+LOADING-P is T when a background refresh is in progress."
+  (declare (ignore refresh-interval))
+  (let* ((status (if loading-p
+                     "Refreshing..."
+                     (if last-updated
+                         (multiple-value-bind (s m h)
+                             (decode-universal-time last-updated)
+                           (declare (ignore s))
+                           (format nil "Updated: ~2,'0D:~2,'0D" h m))
+                         "Not yet updated")))
+         (keys "[r] Refresh  [q] Quit"))
+    (format nil "~A    ~A" keys status)))
+
+;;;; --- Full Application Render ---
+
+(defun render-app (cards units terminal-width last-updated
+                   refresh-interval loading-p error-message)
+  "Render the complete application view as a single string.
+CARDS is a list of weather-card structs (may be NIL).
+UNITS is :metric or :imperial.
+TERMINAL-WIDTH is the number of terminal columns.
+LAST-UPDATED is a universal-time integer or NIL.
+REFRESH-INTERVAL is seconds between refreshes.
+LOADING-P is T when a background fetch is running.
+ERROR-MESSAGE, if non-NIL, is appended in red below the status bar."
+  (let* ((title (tui:bold "otenki"))
+         (grid (cond
+                 (cards
+                  (render-card-grid cards units terminal-width))
+                 (loading-p
+                  "Loading weather data...")
+                 (t
+                  "No locations configured. Add locations to ~/.config/otenki/config.lisp")))
+         (status (render-status-bar last-updated refresh-interval loading-p))
+         (parts (list title "" grid "" status)))
+    (when error-message
+      (setf parts (append parts (list (tui:colored error-message :fg tui:*fg-red*)))))
+    (apply #'tui:join-vertical tui:+left+ parts)))
