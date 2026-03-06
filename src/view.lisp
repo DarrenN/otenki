@@ -39,18 +39,33 @@ Converts to Celsius internally for threshold comparison.
 
 ;;;; --- Hourly Forecast Row ---
 
+(defvar +max-hourly-entries+ 8
+  "Maximum number of hourly forecast entries to display per card.")
+
 (defun render-hourly-row (entries units)
   "Render a compact hourly forecast as two rows: hours then temps.
 ENTRIES is a list of hourly-entry structs. UNITS is :metric or :imperial.
+Each column is padded to the wider of its hour label or temp value.
+At most +MAX-HOURLY-ENTRIES+ entries are shown to prevent overflow.
 Returns a newline-separated string of two rows, or NIL if entries is empty."
   (when entries
-    (let ((hours (mapcar (lambda (e)
-                           (format nil "~2,'0Dh" (hourly-entry-hour e)))
-                         entries))
-          (temps (mapcar (lambda (e)
-                           (format-temp (hourly-entry-temp e) units))
-                         entries)))
-      (format nil "~{~A ~}~%~{~A ~}" hours temps))))
+    (let* ((capped (subseq entries 0 (min (length entries) +max-hourly-entries+)))
+           (hours (mapcar (lambda (e)
+                            (format nil "~2,'0Dh" (hourly-entry-hour e)))
+                          capped))
+           (temps (mapcar (lambda (e)
+                            (format-temp (hourly-entry-temp e) units))
+                          capped))
+           (widths (mapcar (lambda (h tmp)
+                             (max (length h) (length tmp)))
+                           hours temps))
+           (hour-strs (mapcar (lambda (h w)
+                                (format nil "~VA" (1+ w) h))
+                              hours widths))
+           (temp-strs (mapcar (lambda (tmp w)
+                                (format nil "~VA" (1+ w) tmp))
+                              temps widths)))
+      (format nil "~{~A~}~%~{~A~}" hour-strs temp-strs))))
 
 ;;;; --- Single Card Rendering ---
 
@@ -100,7 +115,8 @@ CARDS is a list of weather-card structs. UNITS is :metric or :imperial.
 TERMINAL-WIDTH is the number of terminal columns available.
 
 Cards are arranged into rows based on an estimated card width of 36 columns,
-then joined horizontally per row and vertically across rows."
+then joined horizontally per row and vertically across rows.  Cards within a
+row are padded to equal height before joining to prevent border artifacts."
   (let* ((card-width 36)
          (cards-per-row (max 1 (floor terminal-width card-width)))
          (rendered (mapcar (lambda (c) (render-weather-card c units)) cards))
@@ -110,7 +126,11 @@ then joined horizontally per row and vertically across rows."
                                           (length rendered))))))
     (apply #'tui:join-vertical tui:+left+
            (mapcar (lambda (row)
-                     (apply #'tui:join-horizontal tui:+top+ row))
+                     (let ((max-h (reduce #'max row :key #'tui:height)))
+                       (apply #'tui:join-horizontal tui:+top+
+                              (loop for (card . rest) on row
+                                    collect (tui:place-vertical max-h tui:+top+ card)
+                                    when rest collect "  "))))
                    rows))))
 
 ;;;; --- Status Bar ---
