@@ -72,7 +72,8 @@
                 #:hourly-entry-pop
                 #:format-temp
                 #:format-wind-speed)
-  (:export #:render-weather-card
+  (:export #:condition-icon
+           #:render-weather-card
            #:render-card-grid
            #:render-status-bar
            #:render-app))

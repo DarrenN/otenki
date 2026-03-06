@@ -280,6 +280,22 @@ Normalizes keys to uppercase keywords to match openweathermap library output."
                  :metric 80)))
     (is (search "Tokyo" output))))
 
+(test condition-icon-returns-string
+  "condition-icon returns a string"
+  (is (stringp (otenki.view:condition-icon 800))))
+
+(test condition-icon-clear-contains-sun
+  "Clear sky icon contains the sun character"
+  (is (search "☀" (otenki.view:condition-icon 800))))
+
+(test condition-icon-rain-contains-umbrella
+  "Rain icon contains the umbrella character"
+  (is (search "☂" (otenki.view:condition-icon 500))))
+
+(test condition-icon-snow-contains-snowflake
+  "Snow icon contains the snowflake character"
+  (is (search "❄" (otenki.view:condition-icon 600))))
+
 ;;;; --- JSON Tests ---
 
 (def-suite json-tests :description "JSON output tests" :in all-tests)

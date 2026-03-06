@@ -9,18 +9,19 @@
 ;;;; --- Condition Icons ---
 
 (defun condition-icon (condition-id)
-  "Map an OWM condition ID to a simple text icon.
+  "Map an OWM condition ID to a colored Unicode weather icon.
+Returns a pre-colored string via tui:colored. Single-width characters only.
 Condition ranges follow OWM documentation:
   2xx — Thunderstorm, 3xx — Drizzle, 5xx — Rain,
   6xx — Snow, 7xx — Atmosphere (fog/mist), 800 — Clear, 8xx — Clouds."
   (cond
-    ((< condition-id 300) "storm")
-    ((< condition-id 400) "drizzle")
-    ((< condition-id 600) "rain")
-    ((< condition-id 700) "snow")
-    ((< condition-id 800) "fog")
-    ((= condition-id 800) "clear")
-    (t "clouds")))
+    ((< condition-id 300) (tui:colored "⚡" :fg tui:*fg-magenta*))
+    ((< condition-id 400) (tui:colored "☂" :fg tui:*fg-cyan*))
+    ((< condition-id 600) (tui:colored "☂" :fg tui:*fg-blue*))
+    ((< condition-id 700) (tui:colored "❄" :fg tui:*fg-bright-white*))
+    ((< condition-id 800) (tui:colored "≋" :fg tui:*fg-bright-black*))
+    ((= condition-id 800) (tui:colored "☀" :fg tui:*fg-yellow*))
+    (t                    (tui:colored "☁" :fg tui:*fg-bright-black*))))
 
 ;;;; --- Hourly Forecast Row ---
 
