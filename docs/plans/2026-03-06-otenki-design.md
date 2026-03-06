@@ -159,6 +159,18 @@ vendor/
 The `.asd` file configures ASDF source registry to find vendor systems.
 Makefile includes `make deps` target for `git submodule update --init`.
 
+## Building an Executable
+
+The project compiles to a standalone SBCL image using `sb-ext:save-lisp-and-die`.
+This produces a single binary that can be copied to `~/bin/otenki`.
+
+The Makefile includes:
+- `make build` — compile the executable to `bin/otenki`
+- `make install` — copy the binary to `~/bin/`
+
+The entry point (`otenki.main:main`) handles CLI arg parsing and dispatches
+to either TUI mode or JSON mode.
+
 ## Testing (FiveAM)
 
 ### Test Suites
