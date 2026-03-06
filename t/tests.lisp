@@ -8,6 +8,7 @@
                 #:test
                 #:is
                 #:run!)
+  (:local-nicknames (#:jojo #:jonathan))
   (:export #:run-all-tests))
 
 (in-package #:otenki.tests)
@@ -170,3 +171,43 @@
         (cli-cfg (otenki.config:make-app-config)))
     (let ((merged (otenki.config:merge-configs file-cfg cli-cfg)))
       (is (otenki.config:app-config-json-mode-p merged)))))
+
+;;;; --- API Tests ---
+
+(def-suite api-tests :description "API response parsing tests" :in all-tests)
+(in-suite api-tests)
+
+(defun load-fixture (name)
+  "Load a JSON fixture file and parse it."
+  (let ((path (asdf:system-relative-pathname :otenki/tests
+                                              (format nil "t/fixtures/~A" name))))
+    (jojo:parse (uiop:read-file-string path))))
+
+(test parse-geocoding-response
+  "Parse geocoding API response into lat/lon"
+  (let* ((data (load-fixture "geocoding.json"))
+         (result (otenki.api:parse-geocoding-response data)))
+    (is (not (null result)))
+    (is (< (abs (- (getf result :lat) 35.6762)) 0.001))
+    (is (< (abs (- (getf result :lon) 139.6503)) 0.001))
+    (is (string= (getf result :name) "Tokyo"))))
+
+(test parse-onecall-response
+  "Parse onecall API response into a weather-card"
+  (let* ((data (load-fixture "onecall.json"))
+         (card (otenki.api:parse-onecall-response data "Tokyo")))
+    (is (string= (otenki.model:weather-card-location-name card) "Tokyo"))
+    (is (< (abs (- (otenki.model:weather-card-current-temp card) 295.15)) 0.01))
+    (is (= (otenki.model:weather-card-humidity card) 65))
+    (is (< (abs (- (otenki.model:weather-card-wind-speed card) 3.2)) 0.01))
+    (is (= (otenki.model:weather-card-condition-id card) 800))
+    (is (string= (otenki.model:weather-card-condition-text card) "clear sky"))
+    ;; Check hourly forecast
+    (let ((hourly (otenki.model:weather-card-hourly-forecast card)))
+      (is (= (length hourly) 3))
+      (is (< (abs (- (otenki.model:hourly-entry-temp (first hourly)) 295.15)) 0.01)))))
+
+(test parse-geocoding-empty-response
+  "Parse empty geocoding response"
+  (let ((result (otenki.api:parse-geocoding-response nil)))
+    (is (null result))))

@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Tokyo",
+    "local_names": {"en": "Tokyo", "ja": "東京"},
+    "lat": 35.6762,
+    "lon": 139.6503,
+    "country": "JP",
+    "state": "Tokyo"
+  }
+]
