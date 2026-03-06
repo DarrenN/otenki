@@ -1,31 +1,26 @@
 .PHONY: deps repl test build install clean
 
-QL_SETUP := ~/quicklisp/setup.lisp
-SBCL     := sbcl --noinform --non-interactive \
-                 --load $(QL_SETUP) \
-                 --load load-vendor.lisp \
-                 --load otenki.asd
+VENDOR_DIR := $(shell pwd)/vendor
+CL_SOURCE_REGISTRY := $(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//:$(VENDOR_DIR)/cl-tuition//
+SBCL := CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" sbcl --noinform --non-interactive
 
 deps:
 	git submodule update --init --recursive
 
 repl:
-	rlwrap sbcl --noinform \
-	    --load $(QL_SETUP) \
-	    --load load-vendor.lisp \
-	    --load otenki.asd \
-	    --eval '(ql:quickload :otenki)'
+	CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" rlwrap sbcl --noinform --load otenki.asd \
+		--eval '(asdf:load-system :otenki)'
 
 test:
-	$(SBCL) \
-		--eval '(ql:quickload :otenki/tests)' \
+	$(SBCL) --load otenki.asd \
+		--eval '(asdf:load-system :otenki/tests)' \
 		--eval '(unless (otenki.tests:run-all-tests) (uiop:quit 1))'
 
 build:
 	mkdir -p bin
-	$(SBCL) \
-		--eval '(ql:quickload :otenki)' \
-		--eval '(sb-ext:save-lisp-and-die "bin/otenki" :toplevel (quote otenki.main:main) :executable t :compression t)'
+	$(SBCL) --load otenki.asd \
+		--eval '(asdf:load-system :otenki)' \
+		--eval '(sb-ext:save-lisp-and-die "bin/otenki" :toplevel #'"'"'otenki.main:main :executable t :compression t)'
 
 install: build
 	cp bin/otenki ~/bin/otenki
