@@ -1,0 +1,197 @@
+#+title: otenki
+#+subtitle: weather at a glance
+#+author: otenki contributors
+#+language: en
+
+A Common Lisp TUI for viewing weather across multiple locations.
+
+* Features
+
+- Multi-location card grid displaying current conditions side by side
+- Auto-refresh on a configurable timer (default: every 10 minutes)
+- =--json= mode for machine-readable output suitable for scripts and agents
+- Metric and imperial units — user-configurable, CLI-overridable
+- Functional Core, Imperative Shell architecture
+- Zero runtime dependencies beyond SBCL and Quicklisp
+
+* UI Mockup
+
+#+begin_example
+┌─────────────────────────────────────────────────┐
+│                  otenki                          │
+│                                                  │
+│  ┌─ Tokyo ──────┐  ┌─ New York ────┐            │
+│  │ ☀ 22°C/72°F  │  │ ☁ 15°C/59°F  │            │
+│  │ Humidity: 65% │  │ Humidity: 78% │            │
+│  │ Wind: 3.2 m/s│  │ Wind: 5.1 m/s│            │
+│  │──────────────│  │──────────────│            │
+│  │ 12h 14h 16h  │  │ 12h 14h 16h  │            │
+│  │ 23  24  22   │  │ 16  17  15   │            │
+│  └──────────────┘  └──────────────┘            │
+│                                                  │
+│  [r] Refresh  [q] Quit    Updated: 14:30        │
+│  Auto-refresh in 8:42                           │
+└─────────────────────────────────────────────────┘
+#+end_example
+
+* Prerequisites
+
+- [[https://www.sbcl.org/][SBCL]] (Steel Bank Common Lisp)
+- [[https://www.quicklisp.org/][Quicklisp]]
+- An OpenWeatherMap API key (free tier works fine — see [[#configuration][Configuration]])
+
+* Installation
+
+** Clone with submodules
+
+#+begin_src sh
+git clone --recurse-submodules https://github.com/youruser/otenki.git
+cd otenki
+#+end_src
+
+** Build
+
+#+begin_src sh
+make build
+#+end_src
+
+This compiles a standalone SBCL image and writes it to =bin/otenki=.
+
+** Install
+
+#+begin_src sh
+make install
+#+end_src
+
+Copies =bin/otenki= to =~/bin/otenki=.  Ensure =~/bin= is on your =PATH=.
+
+* Configuration
+  :PROPERTIES:
+  :CUSTOM_ID: configuration
+  :END:
+
+** API Key
+
+otenki reads your OpenWeatherMap API key from the environment variable
+=OPENWEATHER_API_KEY=.
+
+Get a free key at [[https://openweathermap.org/api][openweathermap.org/api]], then export it in your shell
+profile:
+
+#+begin_src sh
+export OPENWEATHER_API_KEY=your_key_here
+#+end_src
+
+** Config File
+
+Create =~/.config/otenki/config.lisp= with a plist:
+
+#+begin_src lisp
+(:units :metric
+ :refresh-interval 600
+ :locations ("Tokyo" "London" "New York"))
+#+end_src
+
+| Key                | Type            | Default    | Description                        |
+|--------------------+-----------------+------------+------------------------------------|
+| =:units=           | =:metric= / =:imperial= | =:metric=  | Display unit system              |
+| =:refresh-interval= | integer (seconds) | =600=    | Auto-refresh cadence               |
+| =:locations=       | list of strings | none       | Locations shown on startup         |
+
+Resolution order: CLI args > config file > built-in defaults.
+
+* Usage
+
+#+begin_src sh
+otenki                          # launch TUI with config locations
+otenki Tokyo London             # launch TUI for specific locations
+otenki --json Tokyo             # one-shot JSON output to stdout
+otenki --units imperial         # override units for this session
+otenki -h                       # show help
+#+end_src
+
+** JSON Output
+
+=--json= mode skips the TUI and prints a JSON array to stdout, one object
+per location.  Useful in scripts and AI agent pipelines:
+
+#+begin_src sh
+otenki --json Tokyo | jq '.[0].current_temp'
+#+end_src
+
+* Development
+
+** Quickstart
+
+#+begin_src sh
+make deps     # initialise git submodules (vendors)
+make test     # run FiveAM test suite
+make repl     # start an interactive SBCL REPL with the system loaded
+make build    # compile the otenki executable
+make clean    # remove build artefacts
+#+end_src
+
+** Running tests
+
+#+begin_src sh
+make test
+#+end_src
+
+Tests use [[https://github.com/lispci/fiveam][FiveAM]] and never require a live API key or network access — all
+HTTP responses are provided as canned JSON fixtures under =t/fixtures/=.
+
+** Interactive REPL
+
+#+begin_src sh
+make repl
+#+end_src
+
+Inside the REPL:
+
+#+begin_src lisp
+(asdf:load-system :otenki)
+(otenki.main:main)
+#+end_src
+
+** Running a single test suite
+
+#+begin_src lisp
+(ql:quickload :otenki/tests)
+(5am:run! 'otenki.tests:all-tests)
+#+end_src
+
+** Project Structure
+
+#+begin_example
+otenki/
+├── otenki.asd
+├── Makefile
+├── README.org
+├── CLAUDE.md
+├── vendor/
+│   ├── openweathermap/    ; git submodule — OWM API client
+│   └── cl-tuition/        ; git submodule — TEA/TUI library
+├── src/
+│   ├── package.lisp
+│   ├── config.lisp        ; reads env vars, config file, merges CLI args
+│   ├── model.lisp         ; pure data structures and unit conversion
+│   ├── api.lisp           ; thin wrapper around openweathermap
+│   ├── view.lisp          ; pure rendering functions
+│   ├── json.lisp          ; JSON serialisation for --json mode
+│   ├── app.lisp           ; TEA wiring: update handlers, command dispatch
+│   └── main.lisp          ; entry point, CLI dispatch
+└── t/
+    ├── fixtures/
+    │   ├── geocoding.json
+    │   └── onecall.json
+    └── tests.lisp
+#+end_example
+
+* License
+
+MIT — see [[file:LICENSE][LICENSE]].
+
+* Credits
+
+- [[https://github.com/DarrenN/openweathermap][openweathermap]] by DarrenN — Common Lisp client for the OpenWeatherMap API
+- [[https://github.com/atgreen/cl-tuition][cl-tuition]] by Anthony Green — Elm Architecture / TEA TUI library for Common Lisp
