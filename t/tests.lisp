@@ -8,7 +8,8 @@
                 #:test
                 #:is
                 #:run!)
-  (:local-nicknames (#:jojo #:jonathan))
+  (:local-nicknames (#:jojo #:jonathan)
+                    (#:tui #:tuition))
   (:export #:run-all-tests))
 
 (in-package #:otenki.tests)
@@ -279,6 +280,68 @@ Normalizes keys to uppercase keywords to match openweathermap library output."
                  (list (make-test-card) (make-test-card))
                  :metric 80)))
     (is (search "Tokyo" output))))
+
+(test render-weather-card-aligned-labels
+  "Card contains aligned label columns"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "Humidity" output))
+    (is (search "Wind" output))
+    (is (search "Condition" output))))
+
+(test render-status-bar-contains-keys
+  "Status bar contains keyboard shortcuts"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "[r]" output))
+    (is (search "[q]" output))))
+
+(test render-status-bar-contains-units
+  "Status bar shows current units"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "metric" output))))
+
+(test render-status-bar-contains-location-count
+  "Status bar shows location count"
+  (let ((output (otenki.view:render-status-bar
+                 (get-universal-time) nil nil 3 :metric)))
+    (is (search "3" output))))
+
+(test condition-icon-returns-string
+  "condition-icon returns a string"
+  (is (stringp (otenki.view:condition-icon 800))))
+
+(test condition-icon-clear-contains-sun
+  "Clear sky icon contains the sun character"
+  (is (search "☀" (otenki.view:condition-icon 800))))
+
+(test condition-icon-rain-contains-umbrella
+  "Rain icon contains the umbrella character"
+  (is (search "☂" (otenki.view:condition-icon 500))))
+
+(test condition-icon-snow-contains-snowflake
+  "Snow icon contains the snowflake character"
+  (is (search "❄" (otenki.view:condition-icon 600))))
+
+(test temp-color-freezing
+  "Freezing temperatures return blue"
+  (is (eql (otenki.view:temp-color 273.15) tui:*fg-blue*)))
+
+(test temp-color-cool
+  "Cool temperatures (10°C) return cyan"
+  (is (eql (otenki.view:temp-color 283.15) tui:*fg-cyan*)))
+
+(test temp-color-mild
+  "Mild temperatures (20°C) return green"
+  (is (eql (otenki.view:temp-color 293.15) tui:*fg-green*)))
+
+(test temp-color-warm
+  "Warm temperatures (30°C) return yellow"
+  (is (eql (otenki.view:temp-color 303.15) tui:*fg-yellow*)))
+
+(test temp-color-hot
+  "Hot temperatures (40°C) return red"
+  (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
 ;;;; --- JSON Tests ---
 
