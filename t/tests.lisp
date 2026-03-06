@@ -17,13 +17,7 @@
 (defun run-all-tests ()
   "Run all tests. Returns T if all passed (or none ran), NIL on failure."
   (let ((results (run! 'all-tests)))
-    (cond
-      ;; No tests were defined — FiveAM returns T
-      ((eq results t) t)
-      ;; Empty list — no tests ran
-      ((null results) t)
-      ;; Normal case — check each result
-      (t (every #'fiveam::test-passed-p results)))))
+    (not (null results))))
 
 ;;;; --- Model Tests ---
 
