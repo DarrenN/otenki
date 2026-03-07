@@ -98,8 +98,9 @@
                 #:hourly-entry-hour
                 #:hourly-entry-temp
                 #:hourly-entry-condition-id
-                #:hourly-entry-pop)
-  (:export #:weather-card-to-plist
+                #:hourly-entry-pop
+                #:kelvin-to-celsius)
+  (:export #:weather-card-to-ht
            #:cards-to-json))
 
 (defpackage #:otenki.app

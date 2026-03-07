@@ -126,24 +126,33 @@ otenki -h                       # show help
 per location.  Useful in scripts and AI agent pipelines:
 
 #+begin_src sh
-otenki --json Tokyo | jq '.[0].condition_text'
+otenki --json Tokyo | jq '.[0].condition'
 #+end_src
 
 Each object contains:
 
-| Field                | Type   | Description                             |
-|----------------------+--------+-----------------------------------------|
-| =location=           | string | Location name                           |
-| =latitude=           | number | Latitude                                |
-| =longitude=          | number | Longitude                               |
-| =temp_kelvin=        | number | Current temperature (Kelvin)            |
-| =feels_like_kelvin=  | number | Feels-like temperature (Kelvin)         |
-| =humidity=           | number | Humidity percentage                     |
-| =wind_speed_ms=      | number | Wind speed (m/s)                        |
-| =wind_direction_deg= | number | Wind direction (degrees)                |
-| =condition_id=       | number | OWM condition code                      |
-| =condition_text=     | string | Human-readable condition                |
-| =hourly_forecast=    | array  | 12-hour forecast entries                |
+| Field           | Type    | Description                             |
+|-----------------+---------+-----------------------------------------|
+| =location=      | string  | Location name                           |
+| =lat=           | number  | Latitude                                |
+| =lon=           | number  | Longitude                               |
+| =temp_c=        | number  | Current temperature (°C, 1 decimal)     |
+| =feels_like_c=  | number  | Feels-like temperature (°C, 1 decimal)  |
+| =humidity=      | integer | Humidity percentage                     |
+| =wind_speed_ms= | number  | Wind speed (m/s)                        |
+| =wind_dir=      | integer | Wind direction (degrees)                |
+| =condition_id=  | integer | OWM condition code                      |
+| =condition=     | string  | Human-readable condition                |
+| =hourly=        | array   | Up to 12 hourly forecast entries        |
+
+Each =hourly= entry contains:
+
+| Field          | Type    | Description                         |
+|----------------+---------+-------------------------------------|
+| =hour=         | integer | Hour of day (0–23, local time)      |
+| =temp_c=       | number  | Temperature (°C, 1 decimal)         |
+| =condition_id= | integer | OWM condition code                  |
+| =pop=          | number  | Probability of precipitation (0–1)  |
 
 * Development
 
