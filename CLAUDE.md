@@ -22,6 +22,7 @@ This project will produce a Common Lisp TUI for getting weather information on t
 - Sync `main` with `origin:main` and create a working branch before starting new work.
 - Run tests before every commit; fix failures before proceeding.
 - Use Conventional Commits (`fix:`, `feat:`, `refactor:`, `chore:`, `style:`, `docs:`, `test:`).
+- Use `git` directly, `gh` is available for Pull Requests, etc.
 - Prefer `README.org` over `README.md`.
 
 ### Tools
@@ -44,8 +45,7 @@ This project will produce a Common Lisp TUI for getting weather information on t
 ## Development Environment
 
 ```lisp
-(ql:quickload :project-name)         ; load
-(asdf:compile-system :project-name)  ; compile
+(ql:quickload :project-name)
 ```
 
 ```shell
@@ -53,6 +53,24 @@ sbcl --load project-name.asd  # or: ros run -l project-name.asd
 ```
 
 Makefile must include `repl` and `test` targets.
+
+### Preferred Libraries
+
+- **JSON**: `com.inoue.jzon` — use the default of hash tables with string keys.
+
+### Optimization Declarations
+
+Development (default):
+
+```lisp
+(declaim (optimize (safety 3) (debug 3) (speed 0)))
+```
+
+Production / executables:
+
+```lisp
+(declaim (optimize (speed 3) (safety 1) (debug 0)))
+```
 
 ## Testing (FiveAM)
 
@@ -66,6 +84,16 @@ Single test suite:
 ```lisp
 (5am:run! 'project-name/tests:suite-name)
 ```
+
+From the shell (for CI / `make test`):
+
+```shell
+sbcl --non-interactive \
+  --eval '(ql:quickload :project-name/tests)' \
+  --eval '(unless (5am:run-all-tests) (uiop:quit 1))'
+```
+
+The `make test` target must emit concise output: a summary line and failure details only. Use a custom report runner to suppress FiveAM's verbose per-test output. Provide a `make test-verbose` target for full FiveAM output when debugging.
 
 ## Code Style
 
@@ -119,6 +147,7 @@ Single test suite:
 
 ```
 project-name/
+├── Makefile
 ├── project-name.asd
 ├── src/
 │   ├── package.lisp
@@ -127,7 +156,50 @@ project-name/
     └── tests.lisp
 ```
 
+## Common Pitfalls
+
+### SBCL double-float stringification
+
+`(princ-to-string 40.7d0)` → `"40.7d0"` — includes the `d0` suffix. When building URLs or external API strings, coerce to single-float first: `(float val 0.0)`.
+
+### FASL cache staleness
+
+ASDF uses file modification times. When debugging mysterious behavior after file moves or reverts, clear caches: `find ~/.cache/common-lisp/ -name "*.fasl" -delete`.
+
+### `serapeum:keep` is NOT `remove-if-not`
+
+`(keep ITEM SEQ)` keeps items matching ITEM via `eql` — it is not a predicate filter. `(serapeum:keep #'identity cmds)` silently returns NIL without error. Use `remove-if-not` or `(remove nil ...)` instead.
+
 ## Conditions and Restarts
 
-- Define custom conditions inheriting from `error` or `warning`
-- Provide restarts with `restart-case` for recoverable errors
+- Inherit from `error`, `warning`, or `simple-error`; include descriptive slots.
+- Use `handler-case` to catch and transform; use `handler-bind` when restarts must execute in the signaling frame (e.g., logging with full stack context).
+- Provide restarts with `restart-case` for recoverable errors:
+
+```lisp
+(restart-case (process-item item)
+  (skip-item () :report "Skip and continue" nil)
+  (use-value (v) :report "Supply a replacement" v))
+```
+
+- Invoke restarts from handlers:
+
+```lisp
+(handler-bind ((parse-error (lambda (c)
+                              (declare (ignore c))
+                              (invoke-restart 'skip-item))))
+  (process-all-items))
+```
+
+## Building Executables
+
+```lisp
+(sb-ext:save-lisp-and-die "project-name"
+  :toplevel #'project-name:main
+  :executable t
+  :compression t)
+```
+
+## Docker
+
+Use `clfoundation/sbcl:<version>-bookworm-slim` as the base image (native arm64 + amd64 support). Follow multi-stage build patterns from the top-level template.
