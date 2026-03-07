@@ -6,7 +6,7 @@
   :license "MIT"
   :depends-on (#:tuition
                #:openweathermap
-               #:jonathan
+               #:com.inuoe.jzon
                #:alexandria
                #:uiop)
   :serial t
