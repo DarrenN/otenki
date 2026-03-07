@@ -3,13 +3,13 @@
 #+author: otenki contributors
 #+language: en
 
-A Common Lisp TUI for viewing weather across multiple locations.
+TUI for viewing weather across multiple locations.
 
-* ✨ AI Disclosure
+** ✨ AI Disclosure
 
 Large portions of the codebase are AI-assisted. For more information checkout =CLAUDE.md= and =/docs/plans=.
 
-* Features
+** Features
 
 - Multi-location card grid displaying current conditions side by side
 - Responsive grid layout that adapts to terminal width
@@ -20,7 +20,7 @@ Large portions of the codebase are AI-assisted. For more information checkout =C
 - Inline error cards when a location fetch fails
 - Functional Core, Imperative Shell architecture
 
-* Screenshot
+** Screenshot
 
 #+begin_example
 otenki
@@ -40,12 +40,6 @@ otenki
 Each card shows the weather condition icon, current temperature, feels-like
 temperature, humidity, wind speed, condition description, and an hourly
 forecast row.  Multiple cards tile horizontally based on terminal width.
-
-* Prerequisites
-
-- [[https://www.sbcl.org/][SBCL]] (Steel Bank Common Lisp)
-- [[https://www.quicklisp.org/][Quicklisp]]
-- An OpenWeatherMap API key (free tier works fine — see [[#configuration][Configuration]])
 
 * Installation
 
@@ -72,12 +66,18 @@ make install
 
 Copies =bin/otenki= to =~/bin/otenki=.  Ensure =~/bin= is on your =PATH=.
 
-* Configuration
+** Prerequisites
+
+- [[https://www.sbcl.org/][SBCL]] (Steel Bank Common Lisp)
+- [[https://www.quicklisp.org/][Quicklisp]]
+- An OpenWeatherMap API key (free tier works fine — see [[#configuration][Configuration]])
+
+** Configuration
   :PROPERTIES:
   :CUSTOM_ID: configuration
   :END:
 
-** API Key
+*** API Key
 
 otenki reads your OpenWeatherMap API key from the environment variable
 =OPENWEATHER_API_KEY=.
@@ -89,7 +89,7 @@ profile:
 export OPENWEATHER_API_KEY=your_key_here
 #+end_src
 
-** Config File
+*** Config File
 
 Create =~/.config/otenki/config.lisp= with a plist:
 
@@ -107,7 +107,7 @@ Create =~/.config/otenki/config.lisp= with a plist:
 
 Resolution order: CLI args > config file > built-in defaults.
 
-* Usage
+** Usage
 
 #+begin_src sh
 otenki                          # launch TUI with config locations
@@ -117,14 +117,14 @@ otenki --units imperial         # override units for this session
 otenki -h                       # show help
 #+end_src
 
-** Keybindings
+*** Keybindings
 
 | Key | Action        |
 |-----+---------------|
 | =q= | Quit          |
 | =r= | Force refresh |
 
-** JSON Output
+*** JSON Output
 
 =--json= mode skips the TUI and prints a JSON array to stdout, one object
 per location.  Useful in scripts and AI agent pipelines:
@@ -158,9 +158,9 @@ Each =hourly= entry contains:
 | =condition_id= | integer | OWM condition code                  |
 | =pop=          | number  | Probability of precipitation (0–1)  |
 
-* Development
+** Development
 
-** Quickstart
+*** Quickstart
 
 #+begin_src sh
 make deps     # initialise git submodules (vendors)
@@ -171,7 +171,7 @@ make install  # copy to ~/bin/otenki
 make clean    # remove build artefacts
 #+end_src
 
-** Running tests
+*** Running tests
 
 #+begin_src sh
 make test
@@ -180,7 +180,7 @@ make test
 Tests use [[https://github.com/lispci/fiveam][FiveAM]] and never require a live API key or network access — all
 HTTP responses are provided as canned JSON fixtures under =t/fixtures/=.
 
-** Interactive REPL
+*** Interactive REPL
 
 #+begin_src sh
 make repl
@@ -193,14 +193,14 @@ Inside the REPL:
 (otenki.main:main)
 #+end_src
 
-** Running a single test suite
+*** Running a single test suite
 
 #+begin_src lisp
 (ql:quickload :otenki/tests)
 (5am:run! 'otenki.tests:all-tests)
 #+end_src
 
-** Architecture
+*** Architecture
 
 otenki follows the Functional Core, Imperative Shell pattern using
 [[https://github.com/atgreen/cl-tuition][cl-tuition]]'s TEA (The Elm Architecture) loop.
@@ -214,8 +214,8 @@ otenki follows the Functional Core, Imperative Shell pattern using
 │           TEA wiring: init, update, view            │
 ├──────────┬──────────┬──────────┬─────────┬──────────┤
 │model.lisp│config.lisp│ api.lisp│view.lisp│json.lisp │
-│ structs  │ parsing  │ OWM API │rendering│  JSON    │
-│ & units  │ & merge  │ wrapper │ (pure)  │  output  │
+│ structs  │ parsing  │ OWM API  │rendering│  JSON    │
+│ & units  │ & merge  │ wrapper  │ (pure)  │  output  │
 └──────────┴──────────┴──────────┴─────────┴──────────┘
 #+end_example
 
@@ -251,11 +251,11 @@ otenki/
     └── tests.lisp          # FiveAM test suites
 #+end_example
 
-* License
+** License
 
 MIT — see [[file:LICENSE][LICENSE]].
 
-* Credits
+** Credits
 
 - [[https://github.com/DarrenN/openweathermap][openweathermap]] by DarrenN — Common Lisp client for the OpenWeatherMap API
 - [[https://github.com/atgreen/cl-tuition][cl-tuition]] by Anthony Green — Elm Architecture / TEA TUI library for Common Lisp
