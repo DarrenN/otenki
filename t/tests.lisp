@@ -10,7 +10,8 @@
                 #:run!)
   (:local-nicknames (#:jzon #:com.inuoe.jzon)
                     (#:tui #:tuition))
-  (:export #:run-all-tests))
+  (:export #:run-all-tests
+           #:run-tests-report))
 
 (in-package #:otenki.tests)
 

@@ -1,7 +1,7 @@
-.PHONY: deps repl test build install clean config help
+.PHONY: deps repl test test-verbose build install clean config help
 
 VENDOR_DIR := $(shell pwd)/vendor
-CL_SOURCE_REGISTRY := $(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//:$(VENDOR_DIR)/cl-tuition//
+CL_SOURCE_REGISTRY := $(shell pwd)//:$(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//:$(VENDOR_DIR)/cl-tuition//
 SBCL := CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" sbcl --noinform --non-interactive
 
 deps: ## Fetch vendored git submodules
@@ -11,7 +11,12 @@ repl: ## Start a REPL with otenki loaded
 	CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" rlwrap sbcl --noinform --load otenki.asd \
 		--eval '(asdf:load-system :otenki)'
 
-test: ## Run the test suite
+test: ## Run the test suite (concise output)
+	$(SBCL) --load otenki.asd \
+		--eval '(asdf:load-system :otenki/tests)' \
+		--eval '(unless (otenki.tests:run-tests-report) (uiop:quit 1))'
+
+test-verbose: ## Run the test suite (full FiveAM output)
 	$(SBCL) --load otenki.asd \
 		--eval '(asdf:load-system :otenki/tests)' \
 		--eval '(unless (otenki.tests:run-all-tests) (uiop:quit 1))'
