@@ -27,6 +27,7 @@
   :serial t
   :components ((:module "t"
                 :components
-                ((:file "tests"))))
+                ((:file "tests")
+                 (:file "report-runner"))))
   :perform (asdf:test-op (o c)
              (uiop:symbol-call :otenki.tests :run-all-tests)))
