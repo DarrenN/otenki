@@ -12,5 +12,5 @@
     (format t "~&TOTAL: ~D passed, ~D failed~%" passed failed)
     (dolist (f failures)
       (format t "~&  FAIL: ~A~%" f)
-      (5am:explain! f))
+      (5am:explain! (list f)))
     (null failures)))

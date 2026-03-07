@@ -343,40 +343,43 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
 (def-suite json-tests :description "JSON output tests" :in all-tests)
 (in-suite json-tests)
 
-(test weather-card-to-plist
-  "Convert weather-card to a serializable plist"
+(test weather-card-to-ht-fields
+  "weather-card-to-ht returns a hash table with new schema fields"
   (let* ((card (make-test-card))
-         (plist (otenki.json:weather-card-to-plist card)))
-    (is (string= (getf plist :|location|) "Tokyo"))
-    (is (< (abs (- (getf plist :|latitude|) 35.6762)) 0.001))
-    (is (= (getf plist :|humidity|) 65))
-    (is (listp (getf plist :|hourly_forecast|)))))
+         (ht (otenki.json:weather-card-to-ht card)))
+    (is (hash-table-p ht))
+    (is (string= (gethash "location" ht) "Tokyo"))
+    (is (< (abs (- (gethash "lat" ht) 35.6762)) 0.001))
+    (is (< (abs (- (gethash "lon" ht) 139.6503)) 0.001))
+    ;; 295.15K → 22.0°C
+    (is (< (abs (- (gethash "temp_c" ht) 22.0)) 0.1))
+    (is (< (abs (- (gethash "feels_like_c" ht) 20.0)) 0.1))
+    (is (= (gethash "humidity" ht) 65))
+    (is (string= (gethash "condition" ht) "clear sky"))
+    (is (listp (gethash "hourly" ht)))))
 
-(test cards-to-json-valid
-  "cards-to-json produces valid JSON string"
-  (let* ((card (make-test-card))
-         (json-str (otenki.json:cards-to-json (list card))))
-    (is (stringp json-str))
-    ;; Should start with [ since it's an array
-    (is (char= (char (string-left-trim '(#\Space #\Newline) json-str) 0) #\[))))
-
-(test hourly-entry-to-plist-basic
-  "Convert hourly-entry struct to a serializable plist"
+(test hourly-entry-to-ht-basic
+  "hourly-entry-to-ht returns a hash table with new schema fields"
   (let* ((entry (otenki.model:make-hourly-entry
                  :hour 14
                  :temp 296.0
                  :condition-id 801
                  :pop 0.3))
-         (plist (otenki.json::hourly-entry-to-plist entry)))
-    (is (= (getf plist :|hour|) 14))
-    (is (< (abs (- (getf plist :|temp_kelvin|) 296.0)) 0.001))
-    (is (= (getf plist :|condition_id|) 801))
-    (is (< (abs (- (getf plist :|precipitation_probability|) 0.3)) 0.001))))
+         (ht (otenki.json::hourly-entry-to-ht entry)))
+    (is (hash-table-p ht))
+    (is (= (gethash "hour" ht) 14))
+    ;; 296.0K → ~22.85°C, round1 gives 22.8 or 22.9 depending on float precision
+    (is (< (abs (- (gethash "temp_c" ht) 22.85)) 0.1))
+    (is (= (gethash "condition_id" ht) 801))
+    (is (< (abs (- (gethash "pop" ht) 0.3)) 0.001))))
 
-(test cards-to-json-round-trip
-  "cards-to-json output contains expected field values"
+(test cards-to-json-produces-objects
+  "cards-to-json output parses to an array of JSON objects"
   (let* ((card (make-test-card))
-         (json-str (otenki.json:cards-to-json (list card))))
-    (is (search "Tokyo" json-str))
-    (is (search "clear sky" json-str))
-    (is (search "65" json-str))))
+         (json-str (otenki.json:cards-to-json (list card)))
+         (parsed (jzon:parse json-str))
+         (obj (aref parsed 0)))
+    (is (hash-table-p obj))
+    (is (string= (gethash "location" obj) "Tokyo"))
+    (is (= (gethash "humidity" obj) 65))
+    (is (string= (gethash "condition" obj) "clear sky"))))
