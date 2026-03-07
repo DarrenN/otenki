@@ -18,9 +18,8 @@
 (def-suite all-tests :description "All otenki tests")
 
 (defun run-all-tests ()
-  "Run all tests. Returns T if all passed, NIL if any failed."
-  (let ((results (run! 'all-tests)))
-    (every (lambda (r) (typep r 'fiveam::test-passed)) results)))
+  "Run all tests with full FiveAM output. Returns T if all passed, NIL if any failed."
+  (run! 'all-tests))
 
 ;;;; --- Model Tests ---
 
