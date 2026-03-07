@@ -39,7 +39,7 @@ Converts to Celsius internally for threshold comparison.
 
 ;;;; --- Hourly Forecast Row ---
 
-(defvar +max-hourly-entries+ 8
+(defconstant +max-hourly-entries+ 8
   "Maximum number of hourly forecast entries to display per card.")
 
 (defun render-hourly-row (entries units)
@@ -135,11 +135,12 @@ row are padded to equal height before joining to prevent border artifacts."
 
 ;;;; --- Status Bar ---
 
-(defun render-status-bar (last-updated next-refresh-time loading-p
+(defun render-status-bar (last-updated next-refresh-time current-time loading-p
                           location-count units)
   "Render the bottom status bar.
 LAST-UPDATED is a universal-time integer or NIL.
 NEXT-REFRESH-TIME is the universal-time of the next auto-refresh, or NIL.
+CURRENT-TIME is the universal-time at the moment of rendering.
 LOADING-P is T when a background refresh is in progress.
 LOCATION-COUNT is the number of configured locations.
 UNITS is :metric or :imperial."
@@ -154,7 +155,7 @@ UNITS is :metric or :imperial."
                        (format nil "Updated ~2,'0D:~2,'0D" h m)))
                     (t "Not yet updated")))
          (countdown (when (and next-refresh-time (not loading-p))
-                      (let ((remaining (- next-refresh-time (get-universal-time))))
+                      (let ((remaining (- next-refresh-time current-time)))
                         (when (plusp remaining)
                           (format nil "Next in ~D:~2,'0D"
                                   (floor remaining 60)
@@ -167,7 +168,7 @@ UNITS is :metric or :imperial."
 ;;;; --- Full Application Render ---
 
 (defun render-app (cards units terminal-width last-updated
-                   next-refresh-time loading-p error-message
+                   next-refresh-time current-time loading-p error-message
                    location-count)
   "Render the complete application view as a single string.
 CARDS is a list of weather-card structs (may be NIL).
@@ -175,6 +176,7 @@ UNITS is :metric or :imperial.
 TERMINAL-WIDTH is the number of terminal columns.
 LAST-UPDATED is a universal-time integer or NIL.
 NEXT-REFRESH-TIME is the universal-time of the next auto-refresh, or NIL.
+CURRENT-TIME is the universal-time at the moment of rendering.
 LOADING-P is T when a background fetch is running.
 ERROR-MESSAGE, if non-NIL, is appended in red below the status bar.
 LOCATION-COUNT is the number of configured locations."
@@ -186,7 +188,7 @@ LOCATION-COUNT is the number of configured locations."
                   "Loading weather data...")
                  (t
                   "No locations configured. Add locations to ~/.config/otenki/config.lisp")))
-         (status (render-status-bar last-updated next-refresh-time
+         (status (render-status-bar last-updated next-refresh-time current-time
                                     loading-p location-count units))
          (parts (list title "" grid "" status)))
     (when error-message

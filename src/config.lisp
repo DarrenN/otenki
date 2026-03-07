@@ -45,29 +45,26 @@ names only those fields the user actually supplied on the command line."
   (let ((units nil)
         (json-mode nil)
         (locations nil)
-        (explicit-fields nil))
-    (loop with i = 0
-          while (< i (length args))
-          for arg = (nth i args)
+        (explicit-fields nil)
+        (remaining args))
+    (loop while remaining
+          for arg = (pop remaining)
           do (cond
                ((string= arg "--json")
                 (setf json-mode t)
-                (push :json-mode-p explicit-fields)
-                (incf i))
+                (push :json-mode-p explicit-fields))
                ((string= arg "--units")
-                (incf i)
-                (unless (< i (length args))
+                (unless remaining
                   (error "Option --units requires an argument."))
-                (let ((val (intern (string-upcase (nth i args)) :keyword)))
+                (let* ((val-str (pop remaining))
+                       (val (intern (string-upcase val-str) :keyword)))
                   (unless (member val '(:metric :imperial))
-                    (error "Unknown units ~S; expected metric or imperial." (nth i args)))
+                    (error "Unknown units ~S; expected metric or imperial." val-str))
                   (setf units val)
-                  (push :units explicit-fields)
-                  (incf i)))
+                  (push :units explicit-fields)))
                (t
                 (push arg locations)
-                (push :locations explicit-fields)
-                (incf i))))
+                (push :locations explicit-fields))))
     (values
      (make-app-config
       :units (or units :metric)

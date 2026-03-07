@@ -189,6 +189,7 @@ schedule the first auto-refresh tick."
               (otenki-model-terminal-width   model)
               (otenki-model-last-updated     model)
               (otenki-model-next-refresh-time model)
+              (get-universal-time)
               (otenki-model-loading-p        model)
               (otenki-model-error-message    model)
               (length (otenki-model-locations model))))

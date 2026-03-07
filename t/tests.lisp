@@ -18,9 +18,9 @@
 (def-suite all-tests :description "All otenki tests")
 
 (defun run-all-tests ()
-  "Run all tests. Returns T if all passed (or none ran), NIL on failure."
+  "Run all tests. Returns T if all passed, NIL if any failed."
   (let ((results (run! 'all-tests)))
-    (not (null results))))
+    (every (lambda (r) (typep r 'fiveam::test-passed)) results)))
 
 ;;;; --- Model Tests ---
 
@@ -278,21 +278,29 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
 (test render-status-bar-contains-keys
   "Status bar contains keyboard shortcuts"
   (let ((output (otenki.view:render-status-bar
-                 (get-universal-time) nil nil 3 :metric)))
+                 (get-universal-time) nil (get-universal-time) nil 3 :metric)))
     (is (search "[r]" output))
     (is (search "[q]" output))))
 
 (test render-status-bar-contains-units
   "Status bar shows current units"
   (let ((output (otenki.view:render-status-bar
-                 (get-universal-time) nil nil 3 :metric)))
+                 (get-universal-time) nil (get-universal-time) nil 3 :metric)))
     (is (search "metric" output))))
 
 (test render-status-bar-contains-location-count
   "Status bar shows location count"
   (let ((output (otenki.view:render-status-bar
-                 (get-universal-time) nil nil 3 :metric)))
+                 (get-universal-time) nil (get-universal-time) nil 3 :metric)))
     (is (search "3" output))))
+
+(test render-status-bar-countdown
+  "Status bar shows countdown derived from current-time, not the system clock"
+  (let* ((current-time 1000)
+         (next-refresh (+ current-time 90))  ; 1m 30s from now
+         (output (otenki.view:render-status-bar
+                  nil next-refresh current-time nil 3 :metric)))
+    (is (search "Next in 1:30" output))))
 
 (test condition-icon-returns-string
   "condition-icon returns a string"
@@ -351,3 +359,24 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
     (is (stringp json-str))
     ;; Should start with [ since it's an array
     (is (char= (char (string-left-trim '(#\Space #\Newline) json-str) 0) #\[))))
+
+(test hourly-entry-to-plist-basic
+  "Convert hourly-entry struct to a serializable plist"
+  (let* ((entry (otenki.model:make-hourly-entry
+                 :hour 14
+                 :temp 296.0
+                 :condition-id 801
+                 :pop 0.3))
+         (plist (otenki.json::hourly-entry-to-plist entry)))
+    (is (= (getf plist :|hour|) 14))
+    (is (< (abs (- (getf plist :|temp_kelvin|) 296.0)) 0.001))
+    (is (= (getf plist :|condition_id|) 801))
+    (is (< (abs (- (getf plist :|precipitation_probability|) 0.3)) 0.001))))
+
+(test cards-to-json-round-trip
+  "cards-to-json output contains expected field values"
+  (let* ((card (make-test-card))
+         (json-str (otenki.json:cards-to-json (list card))))
+    (is (search "Tokyo" json-str))
+    (is (search "clear sky" json-str))
+    (is (search "65" json-str))))

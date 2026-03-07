@@ -70,7 +70,9 @@ Returns a plist (:name :lat :lon) or NIL if no results."
   (handler-case
       (let ((response (openweathermap:fetch-geocoding name :limit 1)))
         (parse-geocoding-response response))
-    (error () nil)))
+    (error (e)
+      (warn "geocode-location: error fetching ~S: ~A" name e)
+      nil)))
 
 (defun fetch-weather-for-location (name)
   "Fetch complete weather data for a location name.
