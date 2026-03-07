@@ -25,4 +25,4 @@
 
 (defun cards-to-json (cards)
   "Serialize a list of weather-card structs to a JSON string."
-  (jonathan:to-json (mapcar #'weather-card-to-plist cards)))
+  (com.inuoe.jzon:stringify (mapcar #'weather-card-to-plist cards)))
