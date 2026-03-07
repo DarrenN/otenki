@@ -5,6 +5,10 @@
 
 A Common Lisp TUI for viewing weather across multiple locations.
 
+* ✨ AI Disclosure
+
+Large portions of the codebase are AI-assisted. For more information checkout =CLAUDE.md= and =/docs/plans=.
+
 * Features
 
 - Multi-location card grid displaying current conditions side by side
@@ -21,13 +25,13 @@ A Common Lisp TUI for viewing weather across multiple locations.
 #+begin_example
 otenki
 
-┌─ New York ─────────────────┐
-│ clouds 13°C  feels 12°C    │
-│ Humidity: 59%  Wind: 3.1…  │
+┌─ New York ──────────────────┐
+│ clouds 13°C  feels 12°C     │
+│ Humidity: 59%  Wind: 3.1…   │
 │ overcast clouds             │
 │                             │
-│ 09h 10h 11h 12h 13h 14h …  │
-│ 13°C 14°C 14°C 15°C 15°C … │
+│ 09h 10h 11h 12h 13h 14h …   │
+│ 13°C 14°C 14°C 15°C 15°C …  │
 └─────────────────────────────┘
 
 [r] Refresh  [q] Quit    Updated: 13:16
