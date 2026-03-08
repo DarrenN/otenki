@@ -16,4 +16,5 @@
 *.wx64fsl
 *.wx32fsl
 .worktrees/
-bin/
+bin/*
+!bin/lisp-eval

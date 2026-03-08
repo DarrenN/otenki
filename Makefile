@@ -44,7 +44,7 @@ config: ## Create a fresh config file at ~/.config/otenki/config.lisp
 	@echo "Created $(CONFIG_FILE)"
 
 clean: ## Remove build artifacts
-	rm -rf bin/
+	rm -f bin/otenki
 
 help: ## Show available targets
 	@printf '\nUsage: make <target>\n\n'

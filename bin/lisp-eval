@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# lisp-eval — Run SBCL expressions with suppressed boilerplate.
+#
+# Usage:
+#   lisp-eval :system-name '(form1)' '(form2)'   # quickload system, then eval
+#   lisp-eval '(form1)' '(form2)'                 # eval without loading a system
+#
+# Quickload output (compilation notes, loading messages) is suppressed.
+# SBCL banner is suppressed via --noinform.
+
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: lisp-eval [:system] '(form)' ..." >&2
+  exit 1
+fi
+
+args=()
+
+# If first arg starts with ':', treat it as a system to quickload quietly.
+if [[ "$1" == :* ]]; then
+  system="$1"
+  shift
+  args+=(--eval "$(cat <<EOF
+(let ((*standard-output* (make-broadcast-stream))
+      (*error-output* (make-broadcast-stream)))
+  (ql:quickload ${system}))
+EOF
+)")
+fi
+
+# Remaining args are forms to eval.
+for form in "$@"; do
+  args+=(--eval "$form")
+done
+
+exec sbcl --noinform --non-interactive "${args[@]}"
