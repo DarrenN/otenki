@@ -163,9 +163,9 @@ schedule the first auto-refresh tick."
                      (lambda () (make-instance 'refresh-msg))))))
 
 ;;; Handle keyboard input.
-(defmethod tui:update-message ((model otenki-model) (msg tui:key-msg))
+(defmethod tui:update-message ((model otenki-model) (msg tui:key-press-msg))
   "q — quit; r — force refresh; everything else is ignored."
-  (let ((key (tui:key-msg-key msg)))
+  (let ((key (tui:key-event-code msg)))
     (cond
       ((and (characterp key) (char= key #\q))
        (values model (tui:quit-cmd)))
