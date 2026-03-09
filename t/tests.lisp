@@ -338,11 +338,12 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
 (test temperature->border-colors-returns-6-strings
-  "temperature->border-colors returns a list of exactly 6 hex strings"
+  "temperature->border-colors returns a list of exactly 6 ANSI RGB color code strings"
   (let ((colors (otenki.view::temperature->border-colors 273.15)))
     (is (= (length colors) 6))
     (is (every #'stringp colors))
-    (is (every (lambda (s) (char= (char s 0) #\#)) colors))))
+    ;; Each element should be an ANSI RGB foreground code like "38;2;R;G;B"
+    (is (every (lambda (s) (not (null (search "38;2;" s)))) colors))))
 
 (test temperature->border-colors-cold-differs-from-hot
   "Different temperatures produce different color lists"
