@@ -205,5 +205,5 @@ Returns a view-state with alt-screen enabled."
                    :locations        (app-config-locations        config)
                    :units            (app-config-units            config)
                    :refresh-interval (app-config-refresh-interval config)))
-         (program (tui:make-program model)))
+         (program (tui:make-program model :pool-size nil)))
     (tui:run program)))
