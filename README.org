@@ -13,6 +13,9 @@ Large portions of the codebase are AI-assisted. For more information checkout =C
 
 - Multi-location card grid displaying current conditions side by side
 - Responsive grid layout that adapts to terminal width
+- Cards stay in configured location order after refreshes
+- Temperature-based gradient borders: cool blue (cold) → warm red (hot), adapts to light/dark terminal
+- Dynamic window title shows =otenki [refreshing…]= while fetching
 - Auto-refresh on a configurable timer (default: every 10 minutes)
 - 12-hour hourly forecast with temperature per location
 - =--json= mode for machine-readable output suitable for scripts and agents
