@@ -198,7 +198,7 @@ then sort cards to match the configured location order."
 
 (defmethod tui:view ((model otenki-model))
   "Delegate rendering to the pure view layer.
-Returns a view-state with alt-screen enabled."
+Returns a view-state with alt-screen enabled and a dynamic window title."
   (tui:make-view
    (render-app (otenki-model-cards            model)
                (otenki-model-units            model)
@@ -209,7 +209,10 @@ Returns a view-state with alt-screen enabled."
                (otenki-model-loading-p        model)
                (otenki-model-error-message    model)
                (length (otenki-model-locations model)))
-   :alt-screen t))
+   :alt-screen t
+   :window-title (if (otenki-model-loading-p model)
+                     "otenki [refreshing…]"
+                     "otenki")))
 
 ;;;; --- Entry Point ---
 
