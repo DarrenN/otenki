@@ -103,6 +103,14 @@ On success it produces a weather-received-msg; on error a weather-error-msg."
 concurrently."
   (apply #'tui:batch (mapcar #'make-fetch-cmd locations)))
 
+(defun %card-location-index (card locations)
+  "Return the index of CARD's location name in LOCATIONS, or MOST-POSITIVE-FIXNUM.
+Used as a sort key to keep the card list in configured order."
+  (or (position (otenki.model:weather-card-location-name card)
+                locations
+                :test #'string-equal)
+      most-positive-fixnum))
+
 ;;;; --- TEA Protocol ---
 
 (defmethod tui:init ((model otenki-model))
@@ -128,13 +136,9 @@ then sort cards to match the configured location order."
                                       (otenki.model:weather-card-location-name c)
                                       name))
                                    (otenki-model-cards model)))))
+    ;;; sort is destructive; updated is a freshly consed list, so mutation is safe.
     (setf (otenki-model-cards       model)
-          (sort updated #'<
-                :key (lambda (c)
-                       (or (position (otenki.model:weather-card-location-name c)
-                                     (otenki-model-locations model)
-                                     :test #'string-equal)
-                           most-positive-fixnum)))
+          (sort updated #'< :key (lambda (c) (%card-location-index c (otenki-model-locations model))))
           (otenki-model-last-updated model) (get-universal-time)
           (otenki-model-loading-p    model) nil)
     (values model nil)))
@@ -154,13 +158,9 @@ then sort cards to match the configured location order."
                                          (otenki.model:weather-card-location-name c)
                                          location))
                                       (otenki-model-cards model)))))
+    ;;; sort is destructive; updated is a freshly consed list, so mutation is safe.
     (setf (otenki-model-cards    model)
-          (sort updated #'<
-                :key (lambda (c)
-                       (or (position (otenki.model:weather-card-location-name c)
-                                     (otenki-model-locations model)
-                                     :test #'string-equal)
-                           most-positive-fixnum)))
+          (sort updated #'< :key (lambda (c) (%card-location-index c (otenki-model-locations model))))
           (otenki-model-loading-p model) nil)
     (values model nil)))
 

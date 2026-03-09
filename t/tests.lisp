@@ -359,6 +359,7 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
                       :humidity 65 :wind-speed 2.0 :wind-direction 180
                       :condition-id 800 :condition-text "clear" :hourly-forecast nil))
          ;; New York arrives first (out of configured order)
+         ;;; Message classes are internal to otenki.app (not exported).
          (msg-ny     (make-instance 'otenki.app::weather-received-msg :card card-ny))
          (msg-tokyo  (make-instance 'otenki.app::weather-received-msg :card card-tokyo)))
     (tui:update-message model msg-ny)
@@ -371,6 +372,7 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   "Error cards also sort to their configured position"
   (let* ((locations '("Tokyo" "Paris"))
          (model (otenki.app:make-otenki-model :locations locations))
+         ;;; Message classes are internal to otenki.app (not exported).
          (msg-paris-err (make-instance 'otenki.app::weather-error-msg
                                        :location "Paris"
                                        :message "timeout"))
