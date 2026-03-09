@@ -118,7 +118,8 @@ schedule the first auto-refresh tick."
 
 ;;; Handle a successful weather data arrival.
 (defmethod tui:update-message ((model otenki-model) (msg weather-received-msg))
-  "Replace or insert the arriving card in the model's card list."
+  "Replace or insert the arriving card in the model's card list,
+then sort cards to match the configured location order."
   (let* ((card    (weather-received-msg-card msg))
          (name    (otenki.model:weather-card-location-name card))
          (updated (cons card
@@ -127,14 +128,21 @@ schedule the first auto-refresh tick."
                                       (otenki.model:weather-card-location-name c)
                                       name))
                                    (otenki-model-cards model)))))
-    (setf (otenki-model-cards       model) updated
+    (setf (otenki-model-cards       model)
+          (sort updated #'<
+                :key (lambda (c)
+                       (or (position (otenki.model:weather-card-location-name c)
+                                     (otenki-model-locations model)
+                                     :test #'string-equal)
+                           most-positive-fixnum)))
           (otenki-model-last-updated model) (get-universal-time)
           (otenki-model-loading-p    model) nil)
     (values model nil)))
 
 ;;; Handle a weather fetch error by inserting an error card.
 (defmethod tui:update-message ((model otenki-model) (msg weather-error-msg))
-  "Insert an error weather-card so the view can display the failure inline."
+  "Insert an error weather-card so the view can display the failure inline,
+then sort cards to match the configured location order."
   (let* ((location   (weather-error-msg-location msg))
          (err-text   (weather-error-msg-message  msg))
          (error-card (otenki.model:make-weather-card
@@ -146,7 +154,13 @@ schedule the first auto-refresh tick."
                                          (otenki.model:weather-card-location-name c)
                                          location))
                                       (otenki-model-cards model)))))
-    (setf (otenki-model-cards    model) updated
+    (setf (otenki-model-cards    model)
+          (sort updated #'<
+                :key (lambda (c)
+                       (or (position (otenki.model:weather-card-location-name c)
+                                     (otenki-model-locations model)
+                                     :test #'string-equal)
+                           most-positive-fixnum)))
           (otenki-model-loading-p model) nil)
     (values model nil)))
 

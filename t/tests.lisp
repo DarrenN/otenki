@@ -337,6 +337,53 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   "Hot temperatures (40°C) return red"
   (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
+;;;; --- App Tests ---
+
+(def-suite app-tests :description "App model and update handler tests" :in all-tests)
+(in-suite app-tests)
+
+(test card-order-preserved-on-weather-received
+  "Cards stay in configured location order regardless of API response arrival order"
+  (let* ((locations '("Tokyo" "New York" "London"))
+         (model (otenki.app:make-otenki-model :locations locations))
+         (card-ny (otenki.model:make-weather-card
+                   :location-name "New York"
+                   :latitude 40.7128 :longitude -74.0060
+                   :current-temp 293.15 :feels-like 292.0
+                   :humidity 60 :wind-speed 3.0 :wind-direction 270
+                   :condition-id 800 :condition-text "clear" :hourly-forecast nil))
+         (card-tokyo (otenki.model:make-weather-card
+                      :location-name "Tokyo"
+                      :latitude 35.6762 :longitude 139.6503
+                      :current-temp 295.15 :feels-like 293.0
+                      :humidity 65 :wind-speed 2.0 :wind-direction 180
+                      :condition-id 800 :condition-text "clear" :hourly-forecast nil))
+         ;; New York arrives first (out of configured order)
+         (msg-ny     (make-instance 'otenki.app::weather-received-msg :card card-ny))
+         (msg-tokyo  (make-instance 'otenki.app::weather-received-msg :card card-tokyo)))
+    (tui:update-message model msg-ny)
+    (tui:update-message model msg-tokyo)
+    (let ((cards (otenki.app::otenki-model-cards model)))
+      (is (string= (otenki.model:weather-card-location-name (first cards))  "Tokyo"))
+      (is (string= (otenki.model:weather-card-location-name (second cards)) "New York")))))
+
+(test card-order-preserved-on-weather-error
+  "Error cards also sort to their configured position"
+  (let* ((locations '("Tokyo" "Paris"))
+         (model (otenki.app:make-otenki-model :locations locations))
+         (msg-paris-err (make-instance 'otenki.app::weather-error-msg
+                                       :location "Paris"
+                                       :message "timeout"))
+         (msg-tokyo-err (make-instance 'otenki.app::weather-error-msg
+                                       :location "Tokyo"
+                                       :message "timeout")))
+    ;; Paris error arrives first
+    (tui:update-message model msg-paris-err)
+    (tui:update-message model msg-tokyo-err)
+    (let ((cards (otenki.app::otenki-model-cards model)))
+      (is (string= (otenki.model:weather-card-location-name (first cards))  "Tokyo"))
+      (is (string= (otenki.model:weather-card-location-name (second cards)) "Paris")))))
+
 ;;;; --- JSON Tests ---
 
 (def-suite json-tests :description "JSON output tests" :in all-tests)
