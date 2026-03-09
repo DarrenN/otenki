@@ -337,6 +337,24 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   "Hot temperatures (40°C) return red"
   (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
+(test temperature->border-colors-returns-6-strings
+  "temperature->border-colors returns a list of exactly 6 hex strings"
+  (let ((colors (otenki.view::temperature->border-colors 273.15)))
+    (is (= (length colors) 6))
+    (is (every #'stringp colors))
+    (is (every (lambda (s) (char= (char s 0) #\#)) colors))))
+
+(test temperature->border-colors-cold-differs-from-hot
+  "Different temperatures produce different color lists"
+  (let ((cold (otenki.view::temperature->border-colors 253.15))   ; -20°C
+        (hot  (otenki.view::temperature->border-colors 313.15)))  ; +40°C
+    (is (not (equal cold hot)))))
+
+(test temperature->border-colors-extreme-clamp
+  "Temperatures outside the -20 to +40 range are clamped, not crashed"
+  (is (= 6 (length (otenki.view::temperature->border-colors 73.15))))   ; -200°C, below min
+  (is (= 6 (length (otenki.view::temperature->border-colors 373.15))))) ; +100°C, above max
+
 ;;;; --- App Tests ---
 
 (def-suite app-tests :description "App model and update handler tests" :in all-tests)

@@ -37,6 +37,21 @@ Converts to Celsius internally for threshold comparison.
       ((<= celsius 35.0) tui:*fg-yellow*)
       (t                  tui:*fg-red*))))
 
+(defun temperature->border-colors (temp-kelvin)
+  "Return a list of 6 hex color strings for a card border gradient.
+TEMP-KELVIN is the card temperature in Kelvin.
+Maps temperature to a position on the cold (−20°C) → hot (+40°C) spectrum,
+then generates a gradient from a darkened shade to the interpolated color.
+Palette adapts to terminal background via tui:light-dark."
+  (let* ((celsius   (kelvin-to-celsius temp-kelvin))
+         (ratio     (max 0.0 (min 1.0 (/ (- celsius -20.0) 60.0))))
+         (cold      (tui:light-dark "#2A6FA8" "#4A9FD4"))
+         (hot       (tui:light-dark "#C03030" "#E84040"))
+         (mid-color (tui:blend-colors cold hot ratio))
+         (dark-end  (tui:darken-color mid-color 0.4)))
+    (loop for i from 0 to 5
+          collect (tui:blend-colors dark-end mid-color (/ i 5.0)))))
+
 ;;;; --- Hourly Forecast Row ---
 
 (defconstant +max-hourly-entries+ 8
@@ -105,7 +120,8 @@ rows (humidity, wind, condition), and an hourly forecast row."
                            condition-line hourly)))
         (tui:render-border body tui:*border-rounded*
                            :title (tui:bold (weather-card-location-name card))
-                           :fg-color tui:*fg-bright-black*))))
+                           :fg-colors (temperature->border-colors
+                                       (weather-card-current-temp card))))))
 
 ;;;; --- Grid Layout ---
 
