@@ -183,16 +183,19 @@ schedule the first auto-refresh tick."
 ;;;; --- View ---
 
 (defmethod tui:view ((model otenki-model))
-  "Delegate rendering to the pure view layer."
-  (render-app (otenki-model-cards            model)
-              (otenki-model-units            model)
-              (otenki-model-terminal-width   model)
-              (otenki-model-last-updated     model)
-              (otenki-model-next-refresh-time model)
-              (get-universal-time)
-              (otenki-model-loading-p        model)
-              (otenki-model-error-message    model)
-              (length (otenki-model-locations model))))
+  "Delegate rendering to the pure view layer.
+Returns a view-state with alt-screen enabled."
+  (tui:make-view
+   (render-app (otenki-model-cards            model)
+               (otenki-model-units            model)
+               (otenki-model-terminal-width   model)
+               (otenki-model-last-updated     model)
+               (otenki-model-next-refresh-time model)
+               (get-universal-time)
+               (otenki-model-loading-p        model)
+               (otenki-model-error-message    model)
+               (length (otenki-model-locations model)))
+   :alt-screen t))
 
 ;;;; --- Entry Point ---
 
@@ -202,5 +205,5 @@ schedule the first auto-refresh tick."
                    :locations        (app-config-locations        config)
                    :units            (app-config-units            config)
                    :refresh-interval (app-config-refresh-interval config)))
-         (program (tui:make-program model :alt-screen t)))
+         (program (tui:make-program model)))
     (tui:run program)))
