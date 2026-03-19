@@ -85,7 +85,7 @@ Returns a newline-separated string of two rows, or NIL if entries is empty."
                               temps widths)))
       (format nil "~{~A~}~%~{~A~}" hour-strs temp-strs))))
 
-;;;; --- Daily Forecast Row ---
+;;; --- Daily Forecast Row ---
 
 (defun render-daily-row (entries units)
   "Render a compact daily forecast as three rows: day names, icons, hi/lo temps.
@@ -97,14 +97,15 @@ Returns a newline-separated string of three rows, or NIL if entries is empty."
            (icons (mapcar (lambda (e) (condition-icon (daily-entry-condition-id e)))
                           entries))
            (temps (mapcar (lambda (e)
-                            (let ((hi (round (kelvin-to-celsius (daily-entry-temp-max e))))
-                                  (lo (round (kelvin-to-celsius (daily-entry-temp-min e)))))
-                              (ecase units
-                                (:metric (format nil "~D/~D°" hi lo))
-                                (:imperial
-                                 (let ((hi-f (round (+ (* hi 9/5) 32)))
-                                       (lo-f (round (+ (* lo 9/5) 32))))
-                                   (format nil "~D/~D°" hi-f lo-f))))))
+                            (ecase units
+                              (:metric
+                               (let ((hi (round (kelvin-to-celsius (daily-entry-temp-max e))))
+                                     (lo (round (kelvin-to-celsius (daily-entry-temp-min e)))))
+                                 (format nil "~D/~D°" hi lo)))
+                              (:imperial
+                               (let ((hi-f (round (+ (* (kelvin-to-celsius (daily-entry-temp-max e)) 9/5) 32)))
+                                     (lo-f (round (+ (* (kelvin-to-celsius (daily-entry-temp-min e)) 9/5) 32))))
+                                 (format nil "~D/~D°" hi-f lo-f)))))
                           entries))
            ;; Icon display width is 1 but string length includes ANSI codes.
            ;; Use day and temp widths for column sizing (icon is always narrower).
@@ -120,14 +121,12 @@ Returns a newline-separated string of three rows, or NIL if entries is empty."
                                   (format nil "~A~VA" ic padding "")))
                               icons widths))
            (temp-strs (mapcar (lambda (e w)
-                                (let* ((hi (round (kelvin-to-celsius (daily-entry-temp-max e))))
-                                       (lo (round (kelvin-to-celsius (daily-entry-temp-min e))))
-                                       (hi-str (ecase units
-                                                 (:metric (format nil "~D" hi))
-                                                 (:imperial (format nil "~D" (round (+ (* hi 9/5) 32))))))
+                                (let* ((hi-str (ecase units
+                                                 (:metric (format nil "~D" (round (kelvin-to-celsius (daily-entry-temp-max e)))))
+                                                 (:imperial (format nil "~D" (round (+ (* (kelvin-to-celsius (daily-entry-temp-max e)) 9/5) 32))))))
                                        (lo-str (ecase units
-                                                 (:metric (format nil "~D" lo))
-                                                 (:imperial (format nil "~D" (round (+ (* lo 9/5) 32))))))
+                                                 (:metric (format nil "~D" (round (kelvin-to-celsius (daily-entry-temp-min e)))))
+                                                 (:imperial (format nil "~D" (round (+ (* (kelvin-to-celsius (daily-entry-temp-min e)) 9/5) 32))))))
                                        (colored-hi (tui:colored hi-str :fg (temp-color (daily-entry-temp-max e))))
                                        (colored-lo (tui:colored lo-str :fg (temp-color (daily-entry-temp-min e))))
                                        (formatted (format nil "~A/~A°" colored-hi colored-lo))
