@@ -85,7 +85,7 @@ Returns a newline-separated string of two rows, or NIL if entries is empty."
                               temps widths)))
       (format nil "~{~A~}~%~{~A~}" hour-strs temp-strs))))
 
-;;; --- Daily Forecast Row ---
+;;;; --- Daily Forecast Row ---
 
 (defun render-daily-row (entries units)
   "Render a compact daily forecast as three rows: day names, icons, hi/lo temps.
