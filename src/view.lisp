@@ -147,7 +147,7 @@ Returns a multi-line string suitable for terminal display.
 
 Error cards display only the error message inside a border.
 Normal cards show a hero line (icon + temp + feels-like), aligned detail
-rows (humidity, wind, condition), and an hourly forecast row."
+rows (humidity, wind, condition), hourly forecast row, and daily forecast row."
   (if (weather-card-error-message card)
       ;; Error card: show only the error message
       (tui:render-border
