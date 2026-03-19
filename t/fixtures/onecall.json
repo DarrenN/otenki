@@ -33,5 +33,25 @@
       "weather": [{"id": 802, "main": "Clouds", "description": "scattered clouds"}],
       "pop": 0.2
     }
+  ],
+  "daily": [
+    {
+      "dt": 1709700000,
+      "temp": {"min": 281.15, "max": 291.15},
+      "weather": [{"id": 800, "main": "Clear", "description": "clear sky"}],
+      "pop": 0.0
+    },
+    {
+      "dt": 1709786400,
+      "temp": {"min": 279.15, "max": 289.15},
+      "weather": [{"id": 801, "main": "Clouds", "description": "few clouds"}],
+      "pop": 0.2
+    },
+    {
+      "dt": 1709872800,
+      "temp": {"min": 280.15, "max": 290.15},
+      "weather": [{"id": 500, "main": "Rain", "description": "light rain"}],
+      "pop": 0.7
+    }
   ]
 }

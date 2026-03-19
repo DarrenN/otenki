@@ -54,11 +54,13 @@
   (:use #:cl)
   (:import-from #:otenki.model
                 #:make-weather-card
-                #:make-hourly-entry)
+                #:make-hourly-entry
+                #:make-daily-entry)
   (:export #:geocode-location
            #:fetch-weather-for-location
            #:parse-onecall-response
-           #:parse-geocoding-response))
+           #:parse-geocoding-response
+           #:unix-to-day-name))
 
 (defpackage #:otenki.view
   (:use #:cl)
