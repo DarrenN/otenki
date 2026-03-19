@@ -23,6 +23,13 @@
       "condition_id" (hourly-entry-condition-id entry)
       "pop"          (hourly-entry-pop entry)))
 
+(defun daily-entry-to-ht (entry)
+  "Convert a daily-entry struct to a string-keyed hash table."
+  (ht "day"          (daily-entry-day-name entry)
+      "temp_min_c"   (round1 (kelvin-to-celsius (daily-entry-temp-min entry)))
+      "temp_max_c"   (round1 (kelvin-to-celsius (daily-entry-temp-max entry)))
+      "condition_id" (daily-entry-condition-id entry)))
+
 (defun weather-card-to-ht (card)
   "Convert a weather-card struct to a string-keyed hash table.
 Temperature values are converted from Kelvin to Celsius (1 decimal place).
@@ -38,7 +45,9 @@ The returned hash table is suitable for direct JSON serialization."
       "condition_id"  (weather-card-condition-id card)
       "condition"     (weather-card-condition-text card)
       "hourly"        (mapcar #'hourly-entry-to-ht
-                              (weather-card-hourly-forecast card))))
+                              (weather-card-hourly-forecast card))
+      "daily"         (mapcar #'daily-entry-to-ht
+                              (weather-card-daily-forecast card))))
 
 (defun cards-to-json (cards)
   "Serialize a list of weather-card structs to a JSON array string."
