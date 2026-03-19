@@ -13,7 +13,7 @@ Add 7-day daily forecast information to weather cards. Data comes from the exist
 | Card placement | Below hourly row (bottom of card) |
 | Visibility | Always visible, no toggle |
 | JSON output | Include daily array in `--json` mode |
-| Architecture | Mirror the hourly pattern (`daily-entry` struct) |
+| Architecture | Mirror the hourly pattern (struct, parsing, package wiring) — view rendering adds an icon row not present in hourly |
 
 ## Data Model
 
@@ -70,7 +70,9 @@ Mon  Tue  Wed  Thu  Fri  Sat  Sun
 
 - Row 1: 3-letter day names
 - Row 2: condition icons (reusing existing `condition-icon`)
-- Row 3: high/low temps, each colored via `temp-color`
+- Row 3: high/low temps (format: `high/low`, e.g. `18/8`), each colored via `temp-color`
+
+Note: this is 3 rows vs hourly's 2 rows — the icon row is unique to daily because daily spans multiple days where conditions vary meaningfully. The "mirror" in the architecture decision refers to the struct/parsing/package pattern, not the rendering layout.
 
 Column widths computed dynamically (same approach as `render-hourly-row`). Returns NIL if entries is empty.
 
@@ -108,7 +110,7 @@ Export: `daily-entry`, `make-daily-entry`, `daily-entry-day-name`, `daily-entry-
 
 ### `otenki.api`
 
-Add `make-daily-entry` to `:import-from otenki.model`.
+Add `make-daily-entry` to `:import-from otenki.model`. Export `unix-to-day-name` for direct testing.
 
 ### `otenki.view`
 
