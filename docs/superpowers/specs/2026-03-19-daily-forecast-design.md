@@ -42,6 +42,8 @@ The `day-name` is a pre-formatted 3-letter abbreviation computed at parse time f
 
 Converts a UNIX timestamp + timezone offset to a 3-letter day abbreviation using CL's `decode-universal-time` after UNIX-to-universal epoch conversion (+2208988800).
 
+**Important:** OWM provides `timezone_offset` in seconds, but `decode-universal-time` expects a timezone as a rational number of hours west of GMT. The offset must be converted: `(/ (- timezone-offset) 3600)` (negated because OWM uses east-of-UTC, CL uses west-of-GMT).
+
 ### `parse-daily-entry`
 
 Mirrors `parse-hourly-entry`. Extracts from the OWM daily hash table:
@@ -65,12 +67,12 @@ Renders a compact daily forecast as three rows:
 ```
 Mon  Tue  Wed  Thu  Fri  Sat  Sun
  ☀    ☁    ☂    ☀    ☀    ⚡   ☂
-18/8 17/7 15/9 20/10 ...
+18/8° 17/7° 15/9° 20/10° ...
 ```
 
 - Row 1: 3-letter day names
 - Row 2: condition icons (reusing existing `condition-icon`)
-- Row 3: high/low temps (format: `high/low`, e.g. `18/8`), each colored via `temp-color`
+- Row 3: high/low temps (format: `high/low°`, e.g. `18/8°`), high colored via `temp-color`, low colored via `temp-color`, trailing degree symbol for clarity
 
 Note: this is 3 rows vs hourly's 2 rows — the icon row is unique to daily because daily spans multiple days where conditions vary meaningfully. The "mirror" in the architecture decision refers to the struct/parsing/package pattern, not the rendering layout.
 
