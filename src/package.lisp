@@ -109,10 +109,15 @@
                 #:weather-card-condition-id
                 #:weather-card-condition-text
                 #:weather-card-hourly-forecast
+                #:weather-card-daily-forecast
                 #:hourly-entry-hour
                 #:hourly-entry-temp
                 #:hourly-entry-condition-id
                 #:hourly-entry-pop
+                #:daily-entry-day-name
+                #:daily-entry-temp-min
+                #:daily-entry-temp-max
+                #:daily-entry-condition-id
                 #:kelvin-to-celsius)
   (:export #:weather-card-to-ht
            #:cards-to-json))

@@ -526,6 +526,30 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
     (is (= (gethash "condition_id" ht) 801))
     (is (< (abs (- (gethash "pop" ht) 0.3)) 0.001))))
 
+(test daily-entry-to-ht-basic
+  "daily-entry-to-ht returns a hash table with correct fields"
+  (let* ((entry (otenki.model:make-daily-entry
+                 :day-name "Wed"
+                 :temp-min 281.15
+                 :temp-max 291.15
+                 :condition-id 800))
+         (ht (otenki.json::daily-entry-to-ht entry)))
+    (is (hash-table-p ht))
+    (is (string= (gethash "day" ht) "Wed"))
+    ;; 281.15K → 8.0°C, 291.15K → 18.0°C
+    (is (< (abs (- (gethash "temp_min_c" ht) 8.0)) 0.1))
+    (is (< (abs (- (gethash "temp_max_c" ht) 18.0)) 0.1))
+    (is (= (gethash "condition_id" ht) 800))))
+
+(test weather-card-to-ht-daily
+  "weather-card-to-ht includes daily array"
+  (let* ((card (make-test-card))
+         (ht (otenki.json:weather-card-to-ht card)))
+    (let ((daily (gethash "daily" ht)))
+      (is (listp daily))
+      (is (= (length daily) 2))
+      (is (string= (gethash "day" (first daily)) "Wed")))))
+
 (test cards-to-json-produces-objects
   "cards-to-json output parses to an array of JSON objects"
   (let* ((card (make-test-card))
