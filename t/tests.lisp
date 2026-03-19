@@ -85,6 +85,18 @@
     (is (= (otenki.model:hourly-entry-hour entry) 14))
     (is (= (otenki.model:hourly-entry-pop entry) 0.2))))
 
+(test make-daily-entry-basic
+  "Create a daily-entry struct"
+  (let ((entry (otenki.model:make-daily-entry
+                :day-name "Mon"
+                :temp-min 281.15
+                :temp-max 291.15
+                :condition-id 800)))
+    (is (string= (otenki.model:daily-entry-day-name entry) "Mon"))
+    (is (< (abs (- (otenki.model:daily-entry-temp-min entry) 281.15)) 0.01))
+    (is (< (abs (- (otenki.model:daily-entry-temp-max entry) 291.15)) 0.01))
+    (is (= (otenki.model:daily-entry-condition-id entry) 800))))
+
 ;;;; --- Config Tests ---
 
 (def-suite config-tests :description "Config tests" :in all-tests)

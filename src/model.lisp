@@ -16,6 +16,7 @@
   (condition-id 0 :type integer)       ; OWM condition code
   (condition-text "" :type string)
   (hourly-forecast nil :type list)     ; list of hourly-entry
+  (daily-forecast nil :type list)     ; list of daily-entry
   (error-message nil :type (or null string)))
 
 (defstruct hourly-entry
@@ -24,6 +25,13 @@
   (temp 0.0 :type float)              ; Kelvin
   (condition-id 0 :type integer)
   (pop 0.0 :type float))              ; probability of precipitation
+
+(defstruct daily-entry
+  "One day of forecast data."
+  (day-name "" :type string)          ; "Mon", "Tue", etc.
+  (temp-min 0.0 :type float)         ; Kelvin
+  (temp-max 0.0 :type float)         ; Kelvin
+  (condition-id 0 :type integer))    ; OWM condition code
 
 ;;;; --- Unit Conversion (Pure Functions) ---
 
