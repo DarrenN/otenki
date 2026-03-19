@@ -85,6 +85,60 @@ Returns a newline-separated string of two rows, or NIL if entries is empty."
                               temps widths)))
       (format nil "~{~A~}~%~{~A~}" hour-strs temp-strs))))
 
+;;;; --- Daily Forecast Row ---
+
+(defun render-daily-row (entries units)
+  "Render a compact daily forecast as three rows: day names, icons, hi/lo temps.
+ENTRIES is a list of daily-entry structs. UNITS is :metric or :imperial.
+Each column is padded to the widest content in that column.
+Returns a newline-separated string of three rows, or NIL if entries is empty."
+  (when entries
+    (let* ((days (mapcar #'daily-entry-day-name entries))
+           (icons (mapcar (lambda (e) (condition-icon (daily-entry-condition-id e)))
+                          entries))
+           (temps (mapcar (lambda (e)
+                            (let ((hi (round (kelvin-to-celsius (daily-entry-temp-max e))))
+                                  (lo (round (kelvin-to-celsius (daily-entry-temp-min e)))))
+                              (ecase units
+                                (:metric (format nil "~D/~D°" hi lo))
+                                (:imperial
+                                 (let ((hi-f (round (+ (* hi 9/5) 32)))
+                                       (lo-f (round (+ (* lo 9/5) 32))))
+                                   (format nil "~D/~D°" hi-f lo-f))))))
+                          entries))
+           ;; Icon display width is 1 but string length includes ANSI codes.
+           ;; Use day and temp widths for column sizing (icon is always narrower).
+           (widths (mapcar (lambda (d tmp)
+                             (max (length d) (length tmp)))
+                           days temps))
+           (day-strs (mapcar (lambda (d w)
+                               (format nil "~VA" (1+ w) d))
+                             days widths))
+           (icon-strs (mapcar (lambda (ic w)
+                                ;; Icons contain ANSI escapes; pad based on display width (1)
+                                (let ((padding (- (1+ w) 1)))
+                                  (format nil "~A~VA" ic padding "")))
+                              icons widths))
+           (temp-strs (mapcar (lambda (e w)
+                                (let* ((hi (round (kelvin-to-celsius (daily-entry-temp-max e))))
+                                       (lo (round (kelvin-to-celsius (daily-entry-temp-min e))))
+                                       (hi-str (ecase units
+                                                 (:metric (format nil "~D" hi))
+                                                 (:imperial (format nil "~D" (round (+ (* hi 9/5) 32))))))
+                                       (lo-str (ecase units
+                                                 (:metric (format nil "~D" lo))
+                                                 (:imperial (format nil "~D" (round (+ (* lo 9/5) 32))))))
+                                       (colored-hi (tui:colored hi-str :fg (temp-color (daily-entry-temp-max e))))
+                                       (colored-lo (tui:colored lo-str :fg (temp-color (daily-entry-temp-min e))))
+                                       (formatted (format nil "~A/~A°" colored-hi colored-lo))
+                                       (plain-len (+ (length hi-str) 1 (length lo-str) 1))) ; "hi/lo°"
+                                  (let ((padding (- (1+ w) plain-len)))
+                                    (if (plusp padding)
+                                        (format nil "~A~VA" formatted padding "")
+                                        formatted))))
+                              entries widths)))
+      (format nil "~{~A~}~%~{~A~}~%~{~A~}" day-strs icon-strs temp-strs))))
+
 ;;;; --- Single Card Rendering ---
 
 (defun render-weather-card (card units)
@@ -118,9 +172,11 @@ rows (humidity, wind, condition), and an hourly forecast row."
                                      (weather-card-condition-text card)))
              (hourly (render-hourly-row
                       (weather-card-hourly-forecast card) units))
-             (body (format nil "~A~%~%~A~%~A~%~A~@[~%~%~A~]"
+             (daily (render-daily-row
+                     (weather-card-daily-forecast card) units))
+             (body (format nil "~A~%~%~A~%~A~%~A~@[~%~%~A~]~@[~%~%~A~]"
                            hero-line humidity-line wind-line
-                           condition-line hourly)))
+                           condition-line hourly daily)))
         (tui:render-border body tui:*border-rounded*
                            :title (tui:bold (weather-card-location-name card))
                            :fg-colors (temperature->border-colors
