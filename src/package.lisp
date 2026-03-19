@@ -79,6 +79,11 @@
                 #:hourly-entry-hour
                 #:hourly-entry-temp
                 #:hourly-entry-pop
+                #:weather-card-daily-forecast
+                #:daily-entry-day-name
+                #:daily-entry-temp-min
+                #:daily-entry-temp-max
+                #:daily-entry-condition-id
                 #:format-temp
                 #:format-wind-speed
                 #:kelvin-to-celsius)

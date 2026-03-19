@@ -291,7 +291,12 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
    :hourly-forecast (list
                      (otenki.model:make-hourly-entry :hour 12 :temp 295.15 :condition-id 800 :pop 0.0)
                      (otenki.model:make-hourly-entry :hour 13 :temp 296.0 :condition-id 801 :pop 0.1)
-                     (otenki.model:make-hourly-entry :hour 14 :temp 294.5 :condition-id 802 :pop 0.2))))
+                     (otenki.model:make-hourly-entry :hour 14 :temp 294.5 :condition-id 802 :pop 0.2))
+   :daily-forecast (list
+                    (otenki.model:make-daily-entry :day-name "Wed" :temp-min 281.15
+                                                   :temp-max 291.15 :condition-id 800)
+                    (otenki.model:make-daily-entry :day-name "Thu" :temp-min 279.15
+                                                   :temp-max 289.15 :condition-id 801))))
 
 (test render-weather-card-contains-location
   "Rendered card contains location name"
@@ -322,6 +327,31 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
                  (list (make-test-card) (make-test-card))
                  :metric 80)))
     (is (search "Tokyo" output))))
+
+(test render-daily-row-basic
+  "render-daily-row produces output with day names and temps"
+  (let* ((entries (list
+                   (otenki.model:make-daily-entry :day-name "Wed" :temp-min 281.15
+                                                  :temp-max 291.15 :condition-id 800)
+                   (otenki.model:make-daily-entry :day-name "Thu" :temp-min 279.15
+                                                  :temp-max 289.15 :condition-id 801)))
+         (output (otenki.view::render-daily-row entries :metric)))
+    (is (stringp output))
+    (is (search "Wed" output))
+    (is (search "Thu" output))
+    ;; 291.15K → 18°C, 281.15K → 8°C
+    (is (search "18" output))
+    (is (search "8" output))))
+
+(test render-daily-row-nil-on-empty
+  "render-daily-row returns NIL for empty list"
+  (is (null (otenki.view::render-daily-row nil :metric))))
+
+(test render-weather-card-contains-daily
+  "Rendered card contains daily forecast day names"
+  (let ((output (otenki.view:render-weather-card (make-test-card) :metric)))
+    (is (search "Wed" output))
+    (is (search "Thu" output))))
 
 (test render-weather-card-aligned-labels
   "Card contains aligned label columns"
