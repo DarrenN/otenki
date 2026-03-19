@@ -328,6 +328,35 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
                  :metric 80)))
     (is (search "Tokyo" output))))
 
+(defun make-wide-daily-card (name hi lo)
+  "Create a card with 7-day daily forecast using the given hi/lo temps (Kelvin)."
+  (otenki.model:make-weather-card
+   :location-name name
+   :current-temp hi
+   :feels-like (- hi 3.0)
+   :humidity 60
+   :wind-speed 3.0
+   :condition-id 800
+   :condition-text "clear sky"
+   :daily-forecast
+   (loop for day in '("Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
+         collect (otenki.model:make-daily-entry
+                  :day-name day :temp-max hi :temp-min lo :condition-id 800))))
+
+(test render-card-grid-fits-terminal-width
+  "Grid never exceeds terminal-width regardless of card content width"
+  ;; Cards with warm temps produce wide daily rows (30/22 vs 15/5 degrees).
+  ;; The stale card-width=36 constant caused cards-per-row to be too large,
+  ;; overflowing the terminal.  This test verifies the fix.
+  (let* ((warm-card (make-wide-daily-card "Tokyo" 303.15 295.15))
+         (cool-card (make-wide-daily-card "New York" 288.15 278.15))
+         (cards (list warm-card cool-card warm-card cool-card)))
+    (dolist (tw '(80 120 160 180 200))
+      (let* ((grid (otenki.view:render-card-grid cards :metric tw))
+             (grid-width (tui:width grid)))
+        (is (<= grid-width tw)
+            "Grid width ~A exceeds terminal-width ~A" grid-width tw)))))
+
 (test render-daily-row-basic
   "render-daily-row produces output with day names and temps"
   (let* ((entries (list

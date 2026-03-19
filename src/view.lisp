@@ -188,12 +188,15 @@ rows (humidity, wind, condition), hourly forecast row, and daily forecast row."
 CARDS is a list of weather-card structs. UNITS is :metric or :imperial.
 TERMINAL-WIDTH is the number of terminal columns available.
 
-Cards are arranged into rows based on an estimated card width of 36 columns,
-then joined horizontally per row and vertically across rows.  Cards within a
-row are padded to equal height before joining to prevent border artifacts."
-  (let* ((card-width 36)
-         (cards-per-row (max 1 (floor terminal-width card-width)))
-         (rendered (mapcar (lambda (c) (render-weather-card c units)) cards))
+Cards are rendered first to measure actual widths, then arranged into rows.
+The widest rendered card determines cards-per-row, accounting for 2-column
+separators between cards.  Cards within a row are padded to equal height
+before joining to prevent border artifacts."
+  (let* ((rendered (mapcar (lambda (c) (render-weather-card c units)) cards))
+         (card-width (if rendered (apply #'max (mapcar #'tui:width rendered)) 36))
+         (sep-width 2)
+         (cards-per-row (max 1 (floor (+ terminal-width sep-width)
+                                      (+ card-width sep-width))))
          (rows (loop for i from 0 below (length rendered) by cards-per-row
                      collect (subseq rendered i
                                      (min (+ i cards-per-row)
