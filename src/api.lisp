@@ -87,11 +87,12 @@ Uses CL's decode-universal-time for reliable day-of-week computation."
      :condition-text (if first-weather
                          (openweathermap:ht-get first-weather "description")
                          "unknown")
-     :hourly-forecast (map 'list
-                           (lambda (e)
-                             (parse-hourly-entry e timezone-offset))
-                           (subseq hourly-data 0
-                                   (min 12 (length hourly-data))))
+     :hourly-forecast (when hourly-data
+                         (map 'list
+                              (lambda (e)
+                                (parse-hourly-entry e timezone-offset))
+                              (subseq hourly-data 0
+                                      (min 12 (length hourly-data)))))
      :daily-forecast (when daily-data
                        (map 'list
                             (lambda (e)
