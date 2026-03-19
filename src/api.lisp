@@ -23,6 +23,23 @@ Returns a plist (:name :lat :lon) or NIL if no results."
   (let ((local-time (+ unix-timestamp timezone-offset)))
     (mod (floor local-time 3600) 24)))
 
+(defconstant +unix-to-universal-offset+ 2208988800
+  "Seconds between CL universal time epoch (1900-01-01) and UNIX epoch (1970-01-01).")
+
+(defvar *day-names* #("Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun")
+  "3-letter day name abbreviations indexed by CL day-of-week (0=Mon, 6=Sun).")
+
+(defun unix-to-day-name (unix-timestamp timezone-offset)
+  "Convert a UNIX timestamp to a 3-letter day name (e.g. \"Wed\").
+TIMEZONE-OFFSET is seconds east of UTC (as provided by OWM).
+Uses CL's decode-universal-time for reliable day-of-week computation."
+  (let* ((universal (+ unix-timestamp +unix-to-universal-offset+))
+         (tz-hours (/ (- timezone-offset) 3600)))
+    (multiple-value-bind (sec min hour date month year day)
+        (decode-universal-time universal tz-hours)
+      (declare (ignore sec min hour date month year))
+      (aref *day-names* day))))
+
 (defun parse-hourly-entry (entry timezone-offset)
   "Parse a single hourly forecast hash-table into an hourly-entry struct."
   (let ((weather-vec (openweathermap:ht-get entry "weather")))
@@ -34,6 +51,18 @@ Returns a plist (:name :lat :lon) or NIL if no results."
                        0)
      :pop (float (or (openweathermap:ht-get entry "pop") 0.0) 0.0))))
 
+(defun parse-daily-entry (entry timezone-offset)
+  "Parse a single daily forecast hash-table into a daily-entry struct."
+  (let ((weather-vec (openweathermap:ht-get entry "weather"))
+        (temp-ht (openweathermap:ht-get entry "temp")))
+    (make-daily-entry
+     :day-name (unix-to-day-name (openweathermap:ht-get entry "dt") timezone-offset)
+     :temp-min (float (openweathermap:ht-get temp-ht "min") 0.0)
+     :temp-max (float (openweathermap:ht-get temp-ht "max") 0.0)
+     :condition-id (if (and weather-vec (plusp (length weather-vec)))
+                       (openweathermap:ht-get (aref weather-vec 0) "id")
+                       0))))
+
 (defun parse-onecall-response (data location-name)
   "Parse onecall API response hash-table into a weather-card struct."
   (let* ((current (openweathermap:ht-get data "current"))
@@ -41,7 +70,8 @@ Returns a plist (:name :lat :lon) or NIL if no results."
          (first-weather (when (and weather-vec (plusp (length weather-vec)))
                           (aref weather-vec 0)))
          (timezone-offset (or (openweathermap:ht-get data "timezone_offset") 0))
-         (hourly-data (openweathermap:ht-get data "hourly")))
+         (hourly-data (openweathermap:ht-get data "hourly"))
+         (daily-data (openweathermap:ht-get data "daily")))
     (make-weather-card
      :location-name location-name
      :latitude (float (openweathermap:ht-get data "lat") 0.0)
@@ -61,7 +91,13 @@ Returns a plist (:name :lat :lon) or NIL if no results."
                            (lambda (e)
                              (parse-hourly-entry e timezone-offset))
                            (subseq hourly-data 0
-                                   (min 12 (length hourly-data)))))))
+                                   (min 12 (length hourly-data))))
+     :daily-forecast (when daily-data
+                       (map 'list
+                            (lambda (e)
+                              (parse-daily-entry e timezone-offset))
+                            (subseq daily-data 0
+                                    (min 7 (length daily-data))))))))
 
 ;;;; --- API Calls (Imperative Shell) ---
 

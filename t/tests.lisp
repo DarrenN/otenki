@@ -226,6 +226,50 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   (let ((result (otenki.api:parse-geocoding-response nil)))
     (is (null result))))
 
+(test parse-onecall-response-daily
+  "parse-onecall-response includes daily forecast entries"
+  (let* ((data (load-fixture "onecall.json"))
+         (card (otenki.api:parse-onecall-response data "Tokyo")))
+    (let ((daily (otenki.model:weather-card-daily-forecast card)))
+      (is (= (length daily) 3))
+      (is (string= (otenki.model:daily-entry-day-name (first daily)) "Wed"))
+      (is (< (abs (- (otenki.model:daily-entry-temp-max (first daily)) 291.15)) 0.01))
+      (is (string= (otenki.model:daily-entry-day-name (third daily)) "Fri")))))
+
+(test unix-to-day-name-wednesday
+  "unix-to-day-name returns Wed for 2024-03-06 at JST"
+  (is (string= (otenki.api:unix-to-day-name 1709700000 32400) "Wed")))
+
+(test unix-to-day-name-thursday
+  "unix-to-day-name returns Thu for 2024-03-07 at JST"
+  (is (string= (otenki.api:unix-to-day-name 1709786400 32400) "Thu")))
+
+(test unix-to-day-name-utc
+  "unix-to-day-name with zero offset"
+  ;; 1709700000 = 2024-03-06 06:00 UTC = Wednesday
+  (is (string= (otenki.api:unix-to-day-name 1709700000 0) "Wed")))
+
+(test unix-to-day-name-negative-offset
+  "unix-to-day-name with negative timezone offset (US Eastern = -18000)"
+  ;; 1709700000 = 2024-03-06 04:40 UTC, minus 5h = 2024-03-05 23:40 = Tuesday
+  (is (string= (otenki.api:unix-to-day-name 1709700000 -18000) "Tue")))
+
+(test unix-to-day-name-day-boundary
+  "unix-to-day-name respects day boundary with timezone offset"
+  ;; 1709683200 = 2024-03-06 00:00 UTC = Tuesday in UTC-5 (2024-03-05 19:00)
+  (is (string= (otenki.api:unix-to-day-name 1709683200 -18000) "Tue")))
+
+(test parse-daily-entry-basic
+  "parse-daily-entry extracts day-name, temps, and condition from fixture data"
+  (let* ((data (load-fixture "onecall.json"))
+         (daily-vec (gethash "daily" data))
+         (tz-offset (gethash "timezone_offset" data))
+         (entry (otenki.api::parse-daily-entry (aref daily-vec 0) tz-offset)))
+    (is (string= (otenki.model:daily-entry-day-name entry) "Wed"))
+    (is (< (abs (- (otenki.model:daily-entry-temp-min entry) 281.15)) 0.01))
+    (is (< (abs (- (otenki.model:daily-entry-temp-max entry) 291.15)) 0.01))
+    (is (= (otenki.model:daily-entry-condition-id entry) 800))))
+
 ;;;; --- View Tests ---
 
 (def-suite view-tests :description "View rendering tests" :in all-tests)
