@@ -22,6 +22,13 @@
            #:hourly-entry-temp
            #:hourly-entry-condition-id
            #:hourly-entry-pop
+           #:daily-entry
+           #:make-daily-entry
+           #:daily-entry-day-name
+           #:daily-entry-temp-min
+           #:daily-entry-temp-max
+           #:daily-entry-condition-id
+           #:weather-card-daily-forecast
            #:kelvin-to-celsius
            #:kelvin-to-fahrenheit
            #:format-temp
