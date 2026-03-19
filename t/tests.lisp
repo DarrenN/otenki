@@ -343,6 +343,19 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
     (is (search "18" output))
     (is (search "8" output))))
 
+(test render-daily-row-imperial
+  "render-daily-row converts temperatures to Fahrenheit for :imperial"
+  (let* ((entries (list
+                   (otenki.model:make-daily-entry :day-name "Wed" :temp-min 281.15
+                                                  :temp-max 291.15 :condition-id 800)))
+         (output (otenki.view::render-daily-row entries :imperial)))
+    (is (stringp output))
+    (is (search "Wed" output))
+    ;; 291.15K → 64°F (direct conversion: (291.15-273.15)*9/5+32 = 64.4 → 64)
+    ;; 281.15K → 46°F (direct conversion: (281.15-273.15)*9/5+32 = 46.4 → 46)
+    (is (search "64" output))
+    (is (search "46" output))))
+
 (test render-daily-row-nil-on-empty
   "render-daily-row returns NIL for empty list"
   (is (null (otenki.view::render-daily-row nil :metric))))
