@@ -37,23 +37,29 @@ Converts to Celsius internally for threshold comparison.
       ((<= celsius 35.0) tui:*fg-yellow*)
       (t                  tui:*fg-red*))))
 
+(defconstant +border-gradient-steps+ 150
+  "Number of color stops for the border gradient.
+Must exceed the card border perimeter (~130-140 chars) so the gradient
+sweeps smoothly once around without repeating.")
+
 (defun temperature->border-colors (temp-kelvin)
-  "Return a list of 6 ANSI color code strings for a card border gradient.
-TEMP-KELVIN is the card temperature in Kelvin.
+  "Return a list of +BORDER-GRADIENT-STEPS+ ANSI color code strings for a
+card border gradient.  TEMP-KELVIN is the card temperature in Kelvin.
 Maps temperature to a position on the cold (−20°C) → hot (+40°C) spectrum,
-then generates a gradient from a darkened shade to the interpolated color.
-Each element is a parsed ANSI RGB code (e.g. \"38;2;74;159;212\") suitable
-for passing to render-border :fg-colors.
+then generates a smooth gradient from a darkened shade to the interpolated
+color.  Each element is a parsed ANSI RGB code (e.g. \"38;2;74;159;212\")
+suitable for passing to render-border :fg-colors.
 Palette adapts to terminal background via tui:light-dark."
   (let* ((celsius   (kelvin-to-celsius temp-kelvin))
          (ratio     (max 0.0 (min 1.0 (/ (- celsius -20.0) 60.0))))
          (cold      (tui:light-dark "#2A6FA8" "#4A9FD4"))
          (hot       (tui:light-dark "#C03030" "#E84040"))
          (mid-color (tui:blend-colors cold hot ratio))
-         (dark-end  (tui:darken-color mid-color 0.4)))
-    (loop for i from 0 to 5
+         (dark-end  (tui:darken-color mid-color 0.4))
+         (steps     (1- +border-gradient-steps+)))
+    (loop for i from 0 to steps
           collect (tui:parse-hex-color
-                   (tui:blend-colors dark-end mid-color (/ i 5.0))))))
+                   (tui:blend-colors dark-end mid-color (/ (float i) steps))))))
 
 ;;;; --- Hourly Forecast Row ---
 
@@ -257,7 +263,7 @@ CURRENT-TIME is the universal-time at the moment of rendering.
 LOADING-P is T when a background fetch is running.
 ERROR-MESSAGE, if non-NIL, is appended in red below the status bar.
 LOCATION-COUNT is the number of configured locations."
-  (let* ((title (tui:bold "otenki"))
+  (let* ((title (tui:bold "🌦️  Otenki お天気"))
          (grid (cond
                  (cards
                   (render-card-grid cards units terminal-width))
