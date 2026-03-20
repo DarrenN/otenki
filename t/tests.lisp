@@ -465,10 +465,10 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
   "Hot temperatures (40°C) return red"
   (is (eql (otenki.view:temp-color 313.15) tui:*fg-red*)))
 
-(test temperature->border-colors-returns-6-strings
-  "temperature->border-colors returns a list of exactly 6 ANSI RGB color code strings"
+(test temperature->border-colors-returns-gradient-strings
+  "temperature->border-colors returns a list of +border-gradient-steps+ ANSI RGB color code strings"
   (let ((colors (otenki.view::temperature->border-colors 273.15)))
-    (is (= (length colors) 6))
+    (is (= (length colors) otenki.view::+border-gradient-steps+))
     (is (every #'stringp colors))
     ;; Each element should be an ANSI RGB foreground code like "38;2;R;G;B"
     (is (every (lambda (s) (not (null (search "38;2;" s)))) colors))))
@@ -481,8 +481,10 @@ Returns string-keyed hash tables matching openweathermap v0.2.0 output."
 
 (test temperature->border-colors-extreme-clamp
   "Temperatures outside the -20 to +40 range are clamped, not crashed"
-  (is (= 6 (length (otenki.view::temperature->border-colors 73.15))))   ; -200°C, below min
-  (is (= 6 (length (otenki.view::temperature->border-colors 373.15))))) ; +100°C, above max
+  (is (= otenki.view::+border-gradient-steps+
+         (length (otenki.view::temperature->border-colors 73.15))))   ; -200°C, below min
+  (is (= otenki.view::+border-gradient-steps+
+         (length (otenki.view::temperature->border-colors 373.15))))) ; +100°C, above max
 
 ;;;; --- App Tests ---
 
