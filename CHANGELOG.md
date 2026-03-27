@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-27
+
 ### Changed
 - Dependencies (cl-tuition, openweathermap) are now external — no more
   vendored submodules.
+- Added GitHub Actions CI, CHANGELOG, and CONTRIBUTING guide.
+- First public release.
 
 ## [0.3.0] - 2026-03-19
 

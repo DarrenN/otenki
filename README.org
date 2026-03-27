@@ -3,6 +3,8 @@
 #+author: otenki contributors
 #+language: en
 
+[[https://github.com/DarrenN/otenki/actions/workflows/test.yml][https://github.com/DarrenN/otenki/actions/workflows/test.yml/badge.svg]]
+
 TUI for viewing weather across multiple locations.
 
 ** ✨ AI Disclosure

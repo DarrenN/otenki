@@ -2,7 +2,7 @@
 
 (asdf:defsystem #:otenki
   :description "A Common Lisp TUI for multi-location weather overview"
-  :version "0.1.0"
+  :version "1.0.0"
   :license "MIT"
   :depends-on (#:tuition
                #:openweathermap
