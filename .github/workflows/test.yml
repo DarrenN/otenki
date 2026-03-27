@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: clfoundation/sbcl:2.6.1-bookworm-slim
+      env:
+        HOME: /root
 
     steps:
       - name: Install system packages
@@ -40,7 +42,6 @@ jobs:
       - name: Run tests
         run: |
           sbcl --noinform --non-interactive \
-            --load "$HOME/quicklisp/setup.lisp" \
             --load otenki.asd \
             --eval '(asdf:load-system :otenki/tests)' \
             --eval '(unless (otenki.tests:run-tests-report) (uiop:quit 1))'
