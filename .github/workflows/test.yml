@@ -40,9 +40,15 @@ jobs:
       - name: Symlink project into local-projects
         run: ln -s "$GITHUB_WORKSPACE" ~/quicklisp/local-projects/otenki
 
+      - name: Verify Quicklisp setup
+        run: |
+          cat /root/.sbclrc
+          ls /root/quicklisp/setup.lisp
+
       - name: Run tests
         run: |
           sbcl --noinform --non-interactive \
+            --load /root/quicklisp/setup.lisp \
             --load otenki.asd \
             --eval '(asdf:load-system :otenki/tests)' \
             --eval '(unless (otenki.tests:run-tests-report) (uiop:quit 1))'
