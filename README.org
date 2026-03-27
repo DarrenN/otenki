@@ -7,7 +7,7 @@ TUI for viewing weather across multiple locations.
 
 ** ✨ AI Disclosure
 
-Large portions of the codebase are AI-assisted. For more information checkout =CLAUDE.md= and =/docs/plans=.
+Large portions of the codebase are AI-assisted (Claude Code).
 
 ** Features
 

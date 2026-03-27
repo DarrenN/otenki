@@ -18,3 +18,10 @@
 .worktrees/
 bin/*
 !bin/lisp-eval
+
+# Claude Code / AI tooling
+.claude/
+.superpowers/
+CLAUDE.md
+docs/plans/
+docs/superpowers/
