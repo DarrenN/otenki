@@ -1,0 +1,49 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  HOME: /root
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: clfoundation/sbcl:2.6.1-bookworm-slim
+
+    steps:
+      - name: Install system packages
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq curl git > /dev/null
+
+      - uses: actions/checkout@v4
+
+      - name: Install Quicklisp
+        run: |
+          curl -sO https://beta.quicklisp.org/quicklisp.lisp
+          sbcl --noinform --non-interactive \
+            --load quicklisp.lisp \
+            --eval '(quicklisp-quickstart:install)' \
+            --eval '(ql-util:without-prompting (ql:add-to-init-file))'
+          rm quicklisp.lisp
+
+      - name: Clone dependencies
+        run: |
+          git clone --depth 1 https://github.com/atgreen/cl-tuition.git ~/quicklisp/local-projects/cl-tuition
+          git clone --depth 1 https://github.com/DarrenN/openweathermap.git ~/quicklisp/local-projects/openweathermap
+
+      - name: Symlink project into local-projects
+        run: ln -s "$GITHUB_WORKSPACE" ~/quicklisp/local-projects/otenki
+
+      - name: Run tests
+        run: |
+          sbcl --noinform --non-interactive \
+            --load /root/quicklisp/setup.lisp \
+            --load otenki.asd \
+            --eval '(ql:quickload :otenki/tests)' \
+            --eval '(unless (otenki.tests:run-tests-report) (uiop:quit 1))'
