@@ -50,5 +50,5 @@ jobs:
           sbcl --noinform --non-interactive \
             --load /root/quicklisp/setup.lisp \
             --load otenki.asd \
-            --eval '(asdf:load-system :otenki/tests)' \
+            --eval '(ql:quickload :otenki/tests)' \
             --eval '(unless (otenki.tests:run-tests-report) (uiop:quit 1))'
