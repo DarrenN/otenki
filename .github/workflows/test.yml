@@ -6,13 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  HOME: /root
+
 jobs:
   test:
     runs-on: ubuntu-latest
     container:
       image: clfoundation/sbcl:2.6.1-bookworm-slim
-      env:
-        HOME: /root
 
     steps:
       - name: Install system packages
@@ -40,8 +41,6 @@ jobs:
         run: ln -s "$GITHUB_WORKSPACE" ~/quicklisp/local-projects/otenki
 
       - name: Run tests
-        env:
-          HOME: /root
         run: |
           sbcl --noinform --non-interactive \
             --load otenki.asd \
