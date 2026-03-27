@@ -49,16 +49,18 @@ forecast row.  Multiple cards tile horizontally based on terminal width.
 ** Clone
 
 #+begin_src sh
-git clone --recurse-submodules https://github.com/youruser/otenki.git
+git clone https://github.com/youruser/otenki.git
 cd otenki
 #+end_src
 
-** Install cl-tuition
+** Install dependencies
 
-cl-tuition is not yet in Quicklisp, so clone it into your local-projects directory:
+cl-tuition and openweathermap are not yet in Quicklisp, so clone them into
+your local-projects directory:
 
 #+begin_src sh
 git clone https://github.com/atgreen/cl-tuition.git ~/quicklisp/local-projects/cl-tuition
+git clone https://github.com/DarrenN/openweathermap.git ~/quicklisp/local-projects/openweathermap
 #+end_src
 
 ** Build
@@ -81,7 +83,8 @@ Copies =bin/otenki= to =~/bin/otenki=.  Ensure =~/bin= is on your =PATH=.
 
 - [[https://www.sbcl.org/][SBCL]] (Steel Bank Common Lisp)
 - [[https://www.quicklisp.org/][Quicklisp]]
-- [[https://github.com/atgreen/cl-tuition][cl-tuition]] — clone into =~/quicklisp/local-projects/= so ASDF can find it
+- [[https://github.com/atgreen/cl-tuition][cl-tuition]] — clone into =~/quicklisp/local-projects/=
+- [[https://github.com/DarrenN/openweathermap][openweathermap]] — clone into =~/quicklisp/local-projects/= ([[https://github.com/quicklisp/quicklisp-projects/issues/2552][Quicklisp submission pending]])
 - An OpenWeatherMap API key (free tier works fine — see [[#configuration][Configuration]])
 
 ** Configuration
@@ -175,7 +178,6 @@ Each =hourly= entry contains:
 *** Quickstart
 
 #+begin_src sh
-make deps     # initialise git submodules (openweathermap)
 make test     # run FiveAM test suite
 make repl     # start an interactive SBCL REPL with the system loaded
 make build    # compile the otenki executable
@@ -244,8 +246,6 @@ otenki/
 ├── Makefile              # Build, test, deploy targets
 ├── README.org
 ├── LICENSE               # MIT
-├── vendor/
-│   └── openweathermap/   # git submodule — OWM API client
 ├── src/
 │   ├── package.lisp      # Package definitions
 │   ├── model.lisp        # Pure data structures and unit conversion
