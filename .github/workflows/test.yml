@@ -40,6 +40,8 @@ jobs:
         run: ln -s "$GITHUB_WORKSPACE" ~/quicklisp/local-projects/otenki
 
       - name: Run tests
+        env:
+          HOME: /root
         run: |
           sbcl --noinform --non-interactive \
             --load otenki.asd \
