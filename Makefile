@@ -1,7 +1,7 @@
 .PHONY: deps repl test test-verbose build install clean config help
 
 VENDOR_DIR := $(shell pwd)/vendor
-CL_SOURCE_REGISTRY := $(shell pwd)//:$(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//:$(VENDOR_DIR)/cl-tuition//
+CL_SOURCE_REGISTRY := $(shell pwd)//:$(VENDOR_DIR)//:$(VENDOR_DIR)/openweathermap//
 SBCL := CL_SOURCE_REGISTRY="$(CL_SOURCE_REGISTRY)" sbcl --noinform --non-interactive
 
 deps: ## Fetch vendored git submodules

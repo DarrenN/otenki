@@ -1,6 +1,3 @@
 [submodule "vendor/openweathermap"]
 	path = vendor/openweathermap
 	url = https://github.com/DarrenN/openweathermap.git
-[submodule "vendor/cl-tuition"]
-	path = vendor/cl-tuition
-	url = https://github.com/atgreen/cl-tuition.git
