@@ -13,6 +13,11 @@ jobs:
       image: clfoundation/sbcl:2.6.1-bookworm-slim
 
     steps:
+      - name: Install system packages
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq curl git > /dev/null
+
       - uses: actions/checkout@v4
 
       - name: Install Quicklisp
